@@ -6,7 +6,7 @@ import PlayingCardsList from './PlayingCard/PlayingCardsList';
 const minColumnHeight = "213px";
 
 
-const existingColumns = {
+const columns = {
   "column1": {
     droppable: false,
     items: [{ id: 'card1', value: "1h", seq: 1 }]
@@ -32,75 +32,51 @@ const existingColumns = {
 
 const currentTurnColumns= {
   "column1": {
-    item: { id: 'card1', value: "1h", seq: 1 }
+    items: [{ id: 'card1', value: "1h", seq: 1 }]
   },
   "column2": {
-    item: null
+    items: []
   },
   "column3": {
-    item: null
+    items: []
   },
   "column4": {
-    item: { id: 'card4', value: "jh", seq: 4 }
+    items: [{ id: 'card4', value: "jh", seq: 4 }]
   },
   "column5": {
-    item: null
+    items: []
   }
 }
 
 
 const origin = {
-  item: { id: 'card7', value: "qs", seq: 7 }
+  items: [{ id: 'card7', value: "qs", seq: 7 }]
 }
 
-
-const columns = {
-  column1: currentTurnColumns.column1,
-  column2: currentTurnColumns.column2,
-  column3: currentTurnColumns.column3,
-  column4: currentTurnColumns.column4,
-  column5: currentTurnColumns.column5,
-  origin: origin.item
-}
 
 const onDragEnd = (result, originColumn, setOriginColumn, columns, setColumns) => {
   if (!result.destination) return;
   const { source, destination } = result;
-  console.log(source, destination)
-  if (source.droppableId !== destination.droppableId) {
-    const sourceColumn = columns[source.droppableId];
-    console.log(columns)
-    const destColumn = columns[destination.droppableId];
-    const sourceItems = [sourceColumn.item];
-    const destItems = [...destColumn.items];
-    const [removed] = sourceItems.splice(source.index, 1);
-    destItems.splice(destination.index, 0, removed);
-    console.log(sourceItems)
-    setColumns({
-      ...columns,
-      [source.droppableId]: {
-        ...sourceColumn,
-        items: sourceItems
-      },
-      [destination.droppableId]: {
-        ...destColumn,
-        items: destItems
-      }
-    });
-  } else {
-
-    const column = columns[source.droppableId];
-    const copiedItems = [column.item];
-    const [removed] = copiedItems.splice(source.index, 1);
-    copiedItems.splice(destination.index, 0, removed);
-    setColumns({
-      ...columns,
-      [source.droppableId]: {
-        ...column,
-        items: copiedItems
-      }
-    });
-  }
+  
+  if (destination.droppableId === source.droppableId) return;  
+  
+  const destColumn = columns[destination.droppableId];
+  const destItems = [...destColumn.items];
+  console.log(originColumn.items[source.index])
+  const [removed] = originColumn.items.splice(source.index, 1);
+  console.log(destItems)
+  destItems.splice(destination.index, 0, removed);
+  console.log(destItems)
+  console.log(destination.droppableId)
+  setColumns({
+    ...columns,
+    [destination.droppableId]: {
+      ...destColumn,
+      items: destItems
+    }
+  });
+  setOriginColumn(originColumn)
+  
 };
 
 function App() {
@@ -112,77 +88,84 @@ function App() {
       <DragDropContext
         onDragEnd={result => onDragEnd(result, originColumn, setOriginColumn, columns, setColumns)}
       >
-        {Object.entries(columns).map(([columnId, column], index) => {
-          return (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-              }}
-              key={columnId}
-            >
-              <div style={{ margin: 8 }}>
-                <Droppable droppableId={columnId} key={columnId} isDropDisabled={typeof column.item !== 'undefined' && column.item !== null}>
-                  {(provided, snapshot) => {
-                    return (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        style={{
-                          background: snapshot.isDraggingOver
-                            ? "lightblue"
-                            : "lightgrey",
-                          padding: 4,
-                          width: 150,
-                          'min-height': minColumnHeight
-                        }}
-                      >
-                        {column.item && 
-                          
-                          <Draggable
-                            key={column.item.id}
-                            draggableId={column.item.id}
-                            index={0}
-                          >
-                            {(provided, snapshot) => {
-                              return (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  style={{
-                                   
-                                    userSelect: "none",
-                                    
-                                    ...provided.draggableProps.style
-                                  }}
-                                >
-                                  <img 
-                                  style={{
-                                    'max-height': '100%',
-                                    'max-width': '100%'
-                                  }}
-                                  alt={PlayingCardsList[column.item.value]} 
-                                  src={PlayingCardsList[column.item.value]} 
-                                  className="file-img" />
-                                </div>
-                              );
-                            }}
-                          </Draggable>
-                          
-                        }
-                        {provided.placeholder}
-                      </div>
-                    );
-                  }}
-                </Droppable>
+        <div>
+          {Object.entries(columns).map(([columnId, column], index) => {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  display: "inline-block", 
+                  zoom: "1", 
+                  verticalAlign: "top"
+                }}
+                key={columnId}
+                
+              >
+                <div style={{ margin: 8 }}>
+                  <Droppable droppableId={columnId} key={columnId} isDropDisabled={column.items.length !== 0}>
+                    {(provided, snapshot) => {
+                      return (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          style={{
+                            background: snapshot.isDraggingOver
+                              ? "lightblue"
+                              : "lightgrey",
+                            padding: 4,
+                            width: 150,
+                            minHeight: minColumnHeight
+                          }}
+                        >
+                          {column.items.map((item, index) => {
+                            return (
+                              <Draggable
+                                key={item.id}
+                                draggableId={item.id}
+                                index={index}
+                                isDragDisabled={true}
+                              >
+                              {(provided, snapshot) => {
+                                  return (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      style={{
+                                       
+                                        userSelect: "none",
+                                        
+                                        ...provided.draggableProps.style
+                                      }}
+                                    >
+                                      <img 
+                                      style={{
+                                        maxHeight: '100%',
+                                        maxWidth: '100%'
+                                      }}
+                                      alt={PlayingCardsList[item.value]} 
+                                      src={PlayingCardsList[item.value]} 
+                                      className="file-img" />
+                                    </div>
+                                  );
+                                }}
+                              </Draggable>
+                            )})
+                          }
+                          {provided.placeholder}
+                        </div>
+                      );
+                    }}
+                  </Droppable>
+                </div>
               </div>
-            </div>
-          );
-        })}
-        <break/>
-        <Droppable droppableId='origin' key='origin' isDropDisabled='false'>
+            );
+          })}
+        </div>
+        <div>
+        <Droppable droppableId='origin' key='origin' isDropDisabled={false}>
           {(provided, snapshot) => {
             return (
               <div
@@ -194,48 +177,49 @@ function App() {
                     : "lightgrey",
                   padding: 4,
                   width: 150,
-                  'min-height': minColumnHeight
+                  minHeight: minColumnHeight
                 }}
               >
-                {origin.item && 
-                  
-                  <Draggable
-                    key={origin.item.id}
-                    draggableId={origin.item.id}
-                    index={0}
-                  >
-                    {(provided, snapshot) => {
-                      return (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                           
-                            userSelect: "none",
-                            
-                            ...provided.draggableProps.style
-                          }}
-                        >
-                          <img 
-                          style={{
-                            'max-height': '100%',
-                            'max-width': '100%'
-                          }}
-                          alt={PlayingCardsList[origin.item.value]} 
-                          src={PlayingCardsList[origin.item.value]} 
-                          className="file-img" />
-                        </div>
-                      );
-                    }}
-                  </Draggable>
-                  
-                }
+                {origin.items.map((item, index) => { 
+                  return (
+                    <Draggable
+                      key={item.id}
+                      draggableId={item.id}
+                      index={index}
+                    >
+                      {(provided, snapshot) => {
+                        return (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{
+                             
+                              userSelect: "none",
+                              
+                              ...provided.draggableProps.style
+                            }}
+                          >
+                            <img 
+                            style={{
+                              maxHeight: '100%',
+                              maxWidth: '100%'
+                            }}
+                            alt={PlayingCardsList[item.value]} 
+                            src={PlayingCardsList[item.value]} 
+                            className="file-img" />
+                          </div>
+                        );
+                      }}
+                    </Draggable>
+                  )
+                })}
                 {provided.placeholder}
               </div>
             );
           }}
         </Droppable>
+        </div>
       </DragDropContext>
     </div>
   );
