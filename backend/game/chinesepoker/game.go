@@ -24,7 +24,6 @@ func NewChinesePokerGame() *ChinesePokerGame {
 	}
 
 	return &game
-
 }
 
 func (g *ChinesePokerGame) checkGameOver() bool {
@@ -59,11 +58,8 @@ func (g *ChinesePokerGame) updateTurn() (gameOver bool, err error) {
 	}
 
 	g.top = g.deck.Draw(1)[0]
-	g.playerTurnIndex++
 
-	if g.playerTurnIndex == PlayerNumber {
-		g.playerTurnIndex = 0
-	}
+	g.playerTurnIndex = (g.playerTurnIndex + 1) % PlayerNumber
 
 	if g.cardsInCurrentIteration == PlayerNumber*HandNumber {
 		g.cardsInCurrentIteration = 0

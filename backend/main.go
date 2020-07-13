@@ -9,15 +9,6 @@ import (
 	"fmt"
 )
 
-func Interface2Object(origin interface{}, target interface{}) (err error) {
-	byteData, err := json.Marshal(origin)
-	if err != nil {
-		return err
-	}
-
-	return json.Unmarshal(byteData, &target)
-}
-
 func main() {
 	g := chinesepoker.NewChinesePokerGame()
 

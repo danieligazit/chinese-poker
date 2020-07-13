@@ -10,23 +10,19 @@ import (
 const channelBufSize = 100
 
 type Client struct {
-	id     uint32
+	Id     uint32
 	ws     *websocket.Conn
 	ch     chan *[]byte
 	doneCh chan bool
-	// 	server *Server
+	server *Server
 }
 
 // NewClient initializes a new Client struct with given websocket.
-func NewClient(ws *websocket.Conn) *Client {
-	if ws == nil {
-		panic("ws cannot be nil")
-	}
-
+func NewClient(clientId int, ws *websocket.Conn, server *Server) *Client {
 	ch := make(chan *[]byte, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{1, ws, ch, doneCh}
+	return &Client{clientId, websocket, ch, doneCh, server}
 }
 
 // Listen Write and Read request via chanel
@@ -40,25 +36,19 @@ func (c *Client) listenWrite() {
 	defer func() {
 		err := c.ws.Close()
 		if err != nil {
-			log.Println("Error:", err.Error())
+			log.Errorf(fmt.Errorf("Cannot close websocket: %w", err))
 		}
 	}()
 
-	log.Println("Listening write to client")
+	log.Info("Listening write to client")
 	for {
 		select {
 
 		case bytes := <-c.ch:
-			before := time.Now()
 			err := c.ws.WriteMessage(websocket.BinaryMessage, *bytes)
-			after := time.Now()
 
 			if err != nil {
-				log.Println(err)
-			} else {
-				elapsed := after.Sub(before)
-				log.Println(elapsed)
-				// c.server.monitor.AddSendTime(elapsed)
+				log.Errorf("Error writing message to websocket: %w", err)
 			}
 
 		case <-c.doneCh:
@@ -108,7 +98,7 @@ func (c *Client) readFromWebSocket() {
 		log.Println(err)
 		c.doneCh <- true
 	} else if messageType != websocket.BinaryMessage {
-		log.Println("Non binary message recived, ignoring")
+		log.Errorf("Non binary message recived, ignoring")
 	} else {
 		fmt.Println(data)
 	}
