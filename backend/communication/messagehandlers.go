@@ -9,15 +9,7 @@ const connectMessage = "connect"
 const chat = "chat"
 
 const stateResponse = "setState"
-
-type ClientMessage struct {
-	ActionType string      `json:"actionType"`
-	Action     interface{} `json:"action"`
-}
-
-type ErrorMessage struct {
-	Message string `json:"message"`
-}
+const errorResponse = "error"
 
 type clientMessageHandler func(clientIndex uint64, clientMessage ClientMessage) (response ClientMessage, err error)
 

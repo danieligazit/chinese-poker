@@ -6,16 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const channelBufSize = 100
-
-type Client struct {
-	Id     uint64
-	ws     *websocket.Conn
-	ch     chan *[]byte
-	doneCh chan bool
-	server *Server
-}
-
 // NewClient initializes a new Client struct with given websocket.
 func NewClient(clientId uint64, ws *websocket.Conn, server *Server) *Client {
 	ch := make(chan *[]byte, channelBufSize)

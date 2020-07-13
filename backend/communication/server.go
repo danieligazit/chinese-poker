@@ -10,20 +10,6 @@ import (
 	"strconv"
 )
 
-const PasswordURLKey = "password"
-const PlayerIdURLKey = "clientId"
-const BaseURI = "/%s"
-
-type Server struct {
-	Id                  string
-	password            string
-	clients             map[uint64]*Client
-	clientId2Index      map[uint64]int
-	upgrader            *websocket.Upgrader
-	game                games.IGame
-	messageType2Handler map[string]clientMessageHandler
-}
-
 func NewServer(id, password string, game games.IGame) *Server {
 	var server = Server{
 		Id:             id,
@@ -89,7 +75,7 @@ func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) sendErrorToClient(clientId uint64, err error) {
 	log.Errorf(err.Error())
-	s.sendToClient(clientId, ErrorMessage{err.Error()})
+	s.sendToClient(clientId, ClientMessage{errorResponse, err.Error()})
 }
 
 func (s *Server) HandleClientMessage(clientId uint64, message []byte) {
