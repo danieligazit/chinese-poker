@@ -2,11 +2,12 @@ import React from "react";
 import { Draggable} from "react-beautiful-dnd";
 import PlayingCardsList from './PlayingCardsList';
 
-export const PlayingCard = ({value, id, index, isDragDisabled}) => {
+export const PlayingCard = ({value, index, isDragDisabled}) => {
+  console.log("value", value)
   return (
     <Draggable
-      key = {id}
-      draggableId = {id}
+      key = {value}
+      draggableId = {value}
       index = {index}
       isDragDisabled = {isDragDisabled}
     >

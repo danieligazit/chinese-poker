@@ -7,90 +7,86 @@ import { PlayingCard } from './PlayingCard/Card'
 const minColumnHeight = "213px";
 
 
-const columns = {
-  "column1": {
-    droppable: false,
-    items: [{ id: 'card1', value: "1h", seq: 1 }]
-  },
-  "column2": {
-    droppable: true,
-    items: [{ id: 'card5', value: "8c", seq: 5 }]
-  },
-  "column3": {
-    droppable: false,
-    items: [{ id: 'card6', value: "kh", seq: 6 }]
-  },
-  "column4": {
-    droppable: true,
-    items: [{ id: 'card4', value: "jh", seq: 4 }]
-  },
-  "column5": {
-    droppable: true,
-    items: [{ id: 'card3', value: "ks", seq: 3 }]
-  }
-};
-
-
-const currentTurnColumns= {
-  "column1": {
-    items: [{ id: 'card1', value: "1h", seq: 1 }]
-  },
-  "column2": {
-    items: []
-  },
-  "column3": {
-    items: []
-  },
-  "column4": {
-    items: [{ id: 'card4', value: "jh", seq: 4 }]
-  },
-  "column5": {
-    items: []
-  }
+const state = {
+  "hands": [
+    ["1h"],
+    [],
+    [],
+    ["jh"],
+    []
+  ],
+  "isCurrentTurn": true,
+  "topCard": "qs",
+  "iteration": 1
 }
 
 
-const origin = {
-  items: [{ id: 'card7', value: "qs", seq: 7 }]
-}
-
-
-const onDragEnd = (result, originColumn, setOriginColumn, columns, setColumns) => {
+const onDragEnd = (result, origin, setOrigin, columns, setColumns) => {
   if (!result.destination) return;
   const { source, destination } = result;
   
   if (destination.droppableId === source.droppableId) return;  
-  
-  const destColumn = columns[destination.droppableId];
-  const destItems = [...destColumn.items];
-  console.log(originColumn.items[source.index])
-  const [removed] = originColumn.items.splice(source.index, 1);
-  console.log(destItems)
-  destItems.splice(destination.index, 0, removed);
-  console.log(destItems)
-  console.log(destination.droppableId)
+    
+  const destColumn = columns[destination.index];
+  const removed = origin;
+  destColumn.splice(destination.index, 0, removed);
   setColumns({
     ...columns,
-    [destination.droppableId]: {
-      ...destColumn,
-      items: destItems
-    }
+    destColumn
   });
-  setOriginColumn(originColumn)
+  setOrigin(null)
   
 };
 
+export const Column = ({values, id, isDropDisabled, isDragDisabled}) => {
+  return (
+    <div style={{ margin: 8 }}>
+      <Droppable droppableId={id} key={id} isDropDisabled={isDropDisabled}>
+        {(provided, snapshot) => {
+          return (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              style={{
+                background: snapshot.isDraggingOver
+                  ? "lightblue"
+                  : "lightgrey",
+                padding: 4,
+                width: 150,
+                minHeight: minColumnHeight
+              }}
+            >
+              { values.map((value, index) => {
+                console.log("columnValues", values)
+                return (
+                  <PlayingCard
+                    value = {value}
+                    index = {index}
+                    isDragDisabled = {isDragDisabled}
+                  />
+                  
+                )})
+              }
+              {provided.placeholder}
+            </div>
+          );
+        }}
+      </Droppable>
+    </div>
+  )
+}
 function App() {
   
-  const [columns, setColumns] = useState(currentTurnColumns);
-  const [originColumn, setOriginColumn] = useState(origin); 
+  const [columns, setColumns] = useState(state.hands);
+  const [origin, setOrigin] = useState(state.topCard); 
   return (
     <div style={{ display: "flex", justifyContent: "center", height: "100%" }}>
       <DragDropContext
-        onDragEnd={result => onDragEnd(result, originColumn, setOriginColumn, columns, setColumns)}
-      >
+        onDragEnd={result => onDragEnd(result, origin, setOrigin, columns, setColumns)}
+      > 
+        
         <div>
-          {Object.entries(columns).map(([columnId, column], index) => {
+          {Object.entries(columns).map((values, index) => {
             return (
               <div
                 style={{
@@ -101,78 +97,17 @@ function App() {
                   zoom: "1", 
                   verticalAlign: "top"
                 }}
-                key={columnId}
+                key={"column-"+ index}
                 
               >
-                <div style={{ margin: 8 }}>
-                  <Droppable droppableId={columnId} key={columnId} isDropDisabled={column.items.length !== 0}>
-                    {(provided, snapshot) => {
-                      return (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          style={{
-                            background: snapshot.isDraggingOver
-                              ? "lightblue"
-                              : "lightgrey",
-                            padding: 4,
-                            width: 150,
-                            minHeight: minColumnHeight
-                          }}
-                        >
-                          {column.items.map((item, index) => {
-                            return (
-                              <PlayingCard
-                                value = {item.value}
-                                id = {"card-"+item.id}
-                                index = {index}
-                                isDragDisabled = {true}
-                              />
-                              
-                            )})
-                          }
-                          {provided.placeholder}
-                        </div>
-                      );
-                    }}
-                  </Droppable>
-                </div>
+                <Column id={"column-" + index} values={values} isDropDisabled={false} isDragDisabled={true}/>
               </div>
+                
             );
           })}
         </div>
         <div>
-        <Droppable droppableId='origin' key='origin' isDropDisabled={false}>
-          {(provided, snapshot) => {
-            return (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                style={{
-                  background: snapshot.isDraggingOver
-                    ? "lightblue"
-                    : "lightgrey",
-                  padding: 4,
-                  width: 150,
-                  minHeight: minColumnHeight
-                }}
-              >
-                {origin.items.map((item, index) => { 
-                  return (
-                    <PlayingCard
-                      value = {item.value}
-                      id = {item.id} 
-                      index = {item.index}
-                      isDragDisabled = {false}
-                    />
-
-                  )
-                })}
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
+          <Column id='origin' values={origin ? [origin] : []} isDropDisabled = {true}m isDragDisabled={false}/>
         </div>
       </DragDropContext>
     </div>
