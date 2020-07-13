@@ -1,19 +1,38 @@
 package communication
 
+import (
+	"fmt"
+)
+
 const makeMoveMessage = "makeMove"
 const connectMessage = "connect"
 const chat = "chat"
 
-type clientMessageHandler func(clientMessage interface{}, clientIndex int) (response interface{}, err error)
+const stateResponse = "setState"
 
-func (s *Server) makeMoveHandler(clientId uint32, clientMessage interface{}) (response interface{}, err error) {
-	responseO, err = s.game.GetState(s.clientId2Index[clientId])
+type ClientMessage struct {
+	ActionType string      `json:"actionType"`
+	Action     interface{} `json:"action"`
+}
+
+type ErrorMessage struct {
+	Message string `json:"message"`
+}
+
+type clientMessageHandler func(clientIndex uint64, clientMessage ClientMessage) (response ClientMessage, err error)
+
+func (s *Server) connectHandler(clientId uint64, clientMessage ClientMessage) (response ClientMessage, err error) {
+	state, err := s.game.GetState(s.clientId2Index[clientId])
 	if err != nil {
-		err = Errorf("Error getting game state: %w", err)
+		err = fmt.Errorf("Error getting game state: %w", err)
 		return
 	}
 
-	response = interface{}(responseO)
+	response = ClientMessage{stateResponse, state}
 
+	return
+}
+
+func (s *Server) makeMoveHandler(clientId uint64, clientMessage ClientMessage) (response ClientMessage, err error) {
 	return
 }

@@ -5,12 +5,14 @@ import (
 	"github.com/chehsunliu/poker"
 )
 
-func NewChinesePokerGame() *ChinesePokerGame {
-	var deck = poker.NewDeck()
-	var game = ChinesePokerGame{
+func NewChinesePokerGame() *Game {
+	deck := poker.NewDeck()
+	card := deck.Draw(1)[0]
+
+	var game = Game{
 		deck:                    deck,
 		hands:                   [PlayerNumber][HandNumber][]poker.Card{},
-		top:                     deck.Draw(1)[0],
+		top:                     &card,
 		iteration:               InitIterations + 1,
 		cardsInCurrentIteration: 0,
 		playerTurnIndex:         0,
@@ -26,14 +28,14 @@ func NewChinesePokerGame() *ChinesePokerGame {
 	return &game
 }
 
-func (g *ChinesePokerGame) checkGameOver() bool {
+func (g *Game) checkGameOver() bool {
 	return g.cardsInCurrentIteration == PlayerNumber*HandNumber && g.iteration == LastIteration
 }
 
-func (g *ChinesePokerGame) updateHands(move ChinesePokerMove) (legal bool, response interface{}) {
+func (g *Game) updateHands(move Move) (legal bool, message string) {
 
 	if move.HandIndex >= len(g.hands[g.playerTurnIndex]) {
-		response = fmt.Sprintf("Hand index %d exceeds hand number (must be 0-%d)", move.HandIndex, HandNumber-1)
+		message = fmt.Sprintf("Hand index %d exceeds hand number (must be 0-%d)", move.HandIndex, HandNumber-1)
 		return
 	}
 
@@ -41,23 +43,28 @@ func (g *ChinesePokerGame) updateHands(move ChinesePokerMove) (legal bool, respo
 
 	legal = len(hand) == g.iteration-1
 	if !legal {
-		response = fmt.Sprintf("Card already assigned to hand on index %d", move.HandIndex)
+		message = fmt.Sprintf("Card already assigned to hand on index %d", move.HandIndex)
 		return
 	}
 
-	g.hands[g.playerTurnIndex][move.HandIndex] = append(g.hands[g.playerTurnIndex][move.HandIndex], g.top)
+	g.hands[g.playerTurnIndex][move.HandIndex] = append(g.hands[g.playerTurnIndex][move.HandIndex], *g.top)
 	g.cardsInCurrentIteration++
 
 	return
 }
 
-func (g *ChinesePokerGame) updateTurn() (gameOver bool, err error) {
+func (g *Game) GetPlayerNum() (int, int) {
+	return PlayerNumber, PlayerNumber
+}
+
+func (g *Game) updateTurn() (err error) {
 	if g.deck.Empty() {
 		err = fmt.Errorf("Card cannot be draw from deck as it is empty")
 		return
 	}
 
-	g.top = g.deck.Draw(1)[0]
+	card := g.deck.Draw(1)[0]
+	g.top = &card
 
 	g.playerTurnIndex = (g.playerTurnIndex + 1) % PlayerNumber
 
@@ -69,37 +76,36 @@ func (g *ChinesePokerGame) updateTurn() (gameOver bool, err error) {
 	return
 }
 
-func (g *ChinesePokerGame) MakeMove(playerIndex int, moveI interface{}) (legal bool, response interface{}, gameOver bool, err error) {
+func (g *Game) MakeMove(playerIndex int, moveI interface{}) (response interface{}, err error) {
+	moveResponse := MoveResponse{}
 	if playerIndex != g.playerTurnIndex {
-		response = fmt.Errorf("It is not player %d turn to play. Should be %d", playerIndex, g.playerTurnIndex)
-		legal = false
-		return
+		moveResponse.Message = fmt.Sprintf("It is not player %d turn to play. Should be %d", playerIndex, g.playerTurnIndex)
+		moveResponse.Legal = false
+		return moveResponse, nil
 	}
 	if g.gameOver {
 		err = fmt.Errorf("Game is already over")
 		return
 	}
-	move, ok := moveI.(ChinesePokerMove)
+	move, ok := moveI.(Move)
 	if !ok {
 		err = fmt.Errorf("Bad move format")
 		return
 	}
 
-	legal, response = g.updateHands(move)
-	if !legal {
-		return
+	if moveResponse.Legal, moveResponse.Message = g.updateHands(move); !moveResponse.Legal {
+		return moveResponse, nil
 	}
 
-	if gameOver = g.checkGameOver(); gameOver {
+	if gameOver := g.checkGameOver(); gameOver {
 		g.gameOver = true
-		return
+		return moveResponse, nil
 	}
 
-	gameOver, err = g.updateTurn()
-	return
+	return moveResponse, g.updateTurn()
 }
 
-func (g *ChinesePokerGame) getResponseCards(requestingPlayerIndex int) (hands [PlayerNumber][HandNumber][]*poker.Card) {
+func (g *Game) getResponseCards(requestingPlayerIndex int) (hands [PlayerNumber][HandNumber][]*poker.Card) {
 
 	for playerIndex, playerHands := range g.hands {
 		for handIndex, handCards := range playerHands {
@@ -116,28 +122,33 @@ func (g *ChinesePokerGame) getResponseCards(requestingPlayerIndex int) (hands [P
 	return
 }
 
-func (g *ChinesePokerGame) isLastIteration() bool {
+func (g *Game) isLastIteration() bool {
 	return g.iteration == LastIteration
 }
 
-func (g *ChinesePokerGame) GetState(requestingPlayerIndex int) (state map[string]interface{}, err error) {
+func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error) {
 	if requestingPlayerIndex >= PlayerNumber {
 		err = fmt.Errorf("Player index does not exists (must be 0-%d)", PlayerNumber-1)
 		return
 	}
 
-	state = map[string]interface{}{
-		"hands": g.getResponseCards(requestingPlayerIndex),
+	curState := State{
+		Hands:         g.getResponseCards(requestingPlayerIndex),
+		IsCurrentTurn: false,
+		IsGameOver:    g.gameOver,
 	}
 
 	if requestingPlayerIndex == g.playerTurnIndex {
-		state["top"] = g.top
+		curState.Top = g.top
+		curState.IsCurrentTurn = true
 	}
+
+	state = curState
 
 	return
 }
 
-func (g *ChinesePokerGame) GetResult() (result map[string]interface{}, err error) {
+func (g *Game) GetResult() (result map[string]interface{}, err error) {
 	if !g.gameOver {
 		err = fmt.Errorf("Game is not over")
 		return

@@ -3,14 +3,13 @@ package communication
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
-	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 const channelBufSize = 100
 
 type Client struct {
-	Id     uint32
+	Id     uint64
 	ws     *websocket.Conn
 	ch     chan *[]byte
 	doneCh chan bool
@@ -18,11 +17,11 @@ type Client struct {
 }
 
 // NewClient initializes a new Client struct with given websocket.
-func NewClient(clientId int, ws *websocket.Conn, server *Server) *Client {
+func NewClient(clientId uint64, ws *websocket.Conn, server *Server) *Client {
 	ch := make(chan *[]byte, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{clientId, websocket, ch, doneCh, server}
+	return &Client{clientId, ws, ch, doneCh, server}
 }
 
 // Listen Write and Read request via chanel
@@ -36,7 +35,7 @@ func (c *Client) listenWrite() {
 	defer func() {
 		err := c.ws.Close()
 		if err != nil {
-			log.Errorf(fmt.Errorf("Cannot close websocket: %w", err))
+			log.Errorf(fmt.Errorf("Cannot close websocket: %w", err).Error())
 		}
 	}()
 
@@ -95,11 +94,11 @@ func (c *Client) Done() {
 func (c *Client) readFromWebSocket() {
 	messageType, data, err := c.ws.ReadMessage()
 	if err != nil {
-		log.Println(err)
+		log.Errorf(err.Error())
 		c.doneCh <- true
 	} else if messageType != websocket.BinaryMessage {
 		log.Errorf("Non binary message recived, ignoring")
 	} else {
-		fmt.Println(data)
+		c.server.HandleClientMessage(c.Id, data)
 	}
 }
