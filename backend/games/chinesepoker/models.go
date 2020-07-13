@@ -26,12 +26,20 @@ type Move struct {
 
 type MoveResponse struct {
 	Legal   bool   `json:"legal"`
-	Message string `josn:"message"`
+	Message string `json:"message"`
 }
 
 type State struct {
 	Top           *poker.Card                             `json:"top"`
 	Hands         [PlayerNumber][HandNumber][]*poker.Card `json:"hands"`
 	IsCurrentTurn bool                                    `json:"isCurrentTurn"`
-	IsGameOver    bool                                    `json:"isGameOver"`
+}
+
+type Evaluation struct {
+	Rank    int32  `json:"rank"`
+	RankStr string `json:"rankStr"`
+}
+type Result struct {
+	Evaluations [PlayerNumber][HandNumber]Evaluation `json:"evaluations"`
+	Winners     [][]int                              `winners`
 }

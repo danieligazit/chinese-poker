@@ -28,7 +28,7 @@ func NewServer(id, password string, game games.IGame) *Server {
 	server.messageType2Handler = map[string]clientMessageHandler{
 		makeMoveMessage: server.makeMoveHandler,
 		connectMessage:  server.connectHandler,
-		// 		chatMEssage:     server.chatHandler,
+		// 		chatMessage:     server.chatHandler,
 	}
 
 	uri := fmt.Sprintf(BaseURI, server.Id)
@@ -38,6 +38,11 @@ func NewServer(id, password string, game games.IGame) *Server {
 }
 
 func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
+
+	if _, maxClientNumber := s.game.GetPlayerNum(); len(s.clients) >= maxClientNumber {
+		http.Error(w, "Server is full", http.StatusLocked)
+		return
+	}
 
 	password := req.URL.Query().Get(PasswordURLKey)
 	if password != s.password {
@@ -64,6 +69,7 @@ func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
 
 	client := NewClient(clientId, conn, s)
 	s.clients[clientId] = client
+
 	if _, exists := s.clientId2Index[clientId]; !exists {
 		s.clientId2Index[clientId] = len(s.clientId2Index)
 	}
@@ -76,6 +82,11 @@ func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
 func (s *Server) sendErrorToClient(clientId uint64, err error) {
 	log.Errorf(err.Error())
 	s.sendToClient(clientId, ClientMessage{errorResponse, err.Error()})
+}
+
+func (s *Server) sendErrorToAllClients(err error) {
+	log.Errorf(err.Error())
+	s.sendToAllClients(ClientMessage{errorResponse, err.Error()})
 }
 
 func (s *Server) HandleClientMessage(clientId uint64, message []byte) {
@@ -91,13 +102,11 @@ func (s *Server) HandleClientMessage(clientId uint64, message []byte) {
 		return
 	}
 
-	response, err := messageHandler(clientId, clientMessage)
-	if err != nil {
+	if err := messageHandler(clientId, clientMessage); err != nil {
 		s.sendErrorToClient(clientId, fmt.Errorf("Internal server error: %w", err))
-		return
 	}
 
-	s.sendToClient(clientId, response)
+	return
 
 }
 

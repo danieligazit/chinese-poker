@@ -3,6 +3,7 @@ package chinesepoker
 import (
 	"fmt"
 	"github.com/chehsunliu/poker"
+	"github.com/danieligazit/chinese-poker/backend/utility"
 )
 
 func NewChinesePokerGame() *Game {
@@ -76,33 +77,37 @@ func (g *Game) updateTurn() (err error) {
 	return
 }
 
-func (g *Game) MakeMove(playerIndex int, moveI interface{}) (response interface{}, err error) {
+func (g *Game) MakeMove(playerIndex int, moveI interface{}) (legal, gameOver bool, response interface{}, err error) {
 	moveResponse := MoveResponse{}
 	if playerIndex != g.playerTurnIndex {
 		moveResponse.Message = fmt.Sprintf("It is not player %d turn to play. Should be %d", playerIndex, g.playerTurnIndex)
 		moveResponse.Legal = false
-		return moveResponse, nil
+		response = moveResponse
+		return
 	}
 	if g.gameOver {
 		err = fmt.Errorf("Game is already over")
 		return
 	}
-	move, ok := moveI.(Move)
-	if !ok {
-		err = fmt.Errorf("Bad move format")
+	var move Move
+	err = utility.Interface2Object(moveI, &move)
+	if err != nil {
+		err = fmt.Errorf("Bad move format: %w", err)
 		return
 	}
 
 	if moveResponse.Legal, moveResponse.Message = g.updateHands(move); !moveResponse.Legal {
-		return moveResponse, nil
+		response = moveResponse
+		return
 	}
 
-	if gameOver := g.checkGameOver(); gameOver {
-		g.gameOver = true
-		return moveResponse, nil
-	}
+	legal = true
+	response = moveResponse
 
-	return moveResponse, g.updateTurn()
+	gameOver = g.checkGameOver()
+	g.gameOver = gameOver
+
+	return
 }
 
 func (g *Game) getResponseCards(requestingPlayerIndex int) (hands [PlayerNumber][HandNumber][]*poker.Card) {
@@ -135,7 +140,6 @@ func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error
 	curState := State{
 		Hands:         g.getResponseCards(requestingPlayerIndex),
 		IsCurrentTurn: false,
-		IsGameOver:    g.gameOver,
 	}
 
 	if requestingPlayerIndex == g.playerTurnIndex {
@@ -148,13 +152,13 @@ func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error
 	return
 }
 
-func (g *Game) GetResult() (result map[string]interface{}, err error) {
+func (g *Game) GetResult() (result interface{}, err error) {
 	if !g.gameOver {
 		err = fmt.Errorf("Game is not over")
 		return
 	}
 
-	handEvaluations := [PlayerNumber][HandNumber]map[string]interface{}{}
+	handEvaluations := [PlayerNumber][HandNumber]Evaluation{}
 	handWinners := make([][]int, HandNumber)
 
 	maxRanks := make([]int32, HandNumber)
@@ -162,23 +166,24 @@ func (g *Game) GetResult() (result map[string]interface{}, err error) {
 	for playerIndex, playerHands := range g.hands {
 		for handIndex, hand := range playerHands {
 			rank := poker.Evaluate(hand)
-			handEvaluations[playerIndex][handIndex] = map[string]interface{}{
-				"rank":       rank,
-				"rankString": poker.RankString(rank),
+
+			handEvaluations[playerIndex][handIndex] = Evaluation{
+				Rank:    rank,
+				RankStr: poker.RankString(rank),
 			}
+
 			if rank == maxRanks[playerIndex] {
 				handWinners[handIndex] = append(handWinners[handIndex], playerIndex)
 			} else if rank > maxRanks[playerIndex] {
 				handWinners[handIndex] = []int{playerIndex}
 				maxRanks[handIndex] = rank
 			}
-
 		}
 	}
 
-	result = map[string]interface{}{
-		"evaluations": handEvaluations,
-		"winners":     handWinners,
+	result = Result{
+		Evaluations: handEvaluations,
+		Winners:     handWinners,
 	}
 	return
 
