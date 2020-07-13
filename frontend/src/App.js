@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import uuid from "uuid/v4";
 import PlayingCardsList from './PlayingCard/PlayingCardsList';
+import { PlayingCard } from './PlayingCard/Card'
 
 const minColumnHeight = "213px";
 
@@ -121,37 +122,13 @@ function App() {
                         >
                           {column.items.map((item, index) => {
                             return (
-                              <Draggable
-                                key={item.id}
-                                draggableId={item.id}
-                                index={index}
-                                isDragDisabled={true}
-                              >
-                              {(provided, snapshot) => {
-                                  return (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      style={{
-                                       
-                                        userSelect: "none",
-                                        
-                                        ...provided.draggableProps.style
-                                      }}
-                                    >
-                                      <img 
-                                      style={{
-                                        maxHeight: '100%',
-                                        maxWidth: '100%'
-                                      }}
-                                      alt={PlayingCardsList[item.value]} 
-                                      src={PlayingCardsList[item.value]} 
-                                      className="file-img" />
-                                    </div>
-                                  );
-                                }}
-                              </Draggable>
+                              <PlayingCard
+                                value = {item.value}
+                                id = {"card-"+item.id}
+                                index = {index}
+                                isDragDisabled = {true}
+                              />
+                              
                             )})
                           }
                           {provided.placeholder}
@@ -182,36 +159,13 @@ function App() {
               >
                 {origin.items.map((item, index) => { 
                   return (
-                    <Draggable
-                      key={item.id}
-                      draggableId={item.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => {
-                        return (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={{
-                             
-                              userSelect: "none",
-                              
-                              ...provided.draggableProps.style
-                            }}
-                          >
-                            <img 
-                            style={{
-                              maxHeight: '100%',
-                              maxWidth: '100%'
-                            }}
-                            alt={PlayingCardsList[item.value]} 
-                            src={PlayingCardsList[item.value]} 
-                            className="file-img" />
-                          </div>
-                        );
-                      }}
-                    </Draggable>
+                    <PlayingCard
+                      value = {item.value}
+                      id = {item.id} 
+                      index = {item.index}
+                      isDragDisabled = {false}
+                    />
+
                   )
                 })}
                 {provided.placeholder}
