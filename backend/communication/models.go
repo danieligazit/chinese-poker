@@ -1,16 +1,13 @@
 package communication
 
 import (
-	"github.com/gorilla/websocket"
 	"github.com/danieligazit/chinese-poker/backend/games"
+	"github.com/gorilla/websocket"
 )
 
 const channelBufSize = 100
 
-const PasswordURLKey = "password"
 const PlayerIdURLKey = "clientId"
-const BaseURI = "/%s"
-
 
 type Client struct {
 	Id     uint64
@@ -21,12 +18,12 @@ type Client struct {
 }
 
 type Server struct {
-	Id                  string
-	password            string
+	id                  string
 	clients             map[uint64]*Client
 	clientId2Index      map[uint64]int
 	upgrader            *websocket.Upgrader
 	game                games.IGame
+	started             bool
 	messageType2Handler map[string]clientMessageHandler
 }
 
@@ -34,5 +31,3 @@ type ClientMessage struct {
 	ActionType string      `json:"actionType"`
 	Action     interface{} `json:"action"`
 }
-
-

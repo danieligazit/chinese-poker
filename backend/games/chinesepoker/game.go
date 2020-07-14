@@ -3,10 +3,11 @@ package chinesepoker
 import (
 	"fmt"
 	"github.com/chehsunliu/poker"
+	"github.com/danieligazit/chinese-poker/backend/games"
 	"github.com/danieligazit/chinese-poker/backend/utility"
 )
 
-func NewChinesePokerGame(params interface{}) *Game {
+func NewGame(params interface{}) games.IGame {
 	deck := poker.NewDeck()
 	card := deck.Draw(1)[0]
 
@@ -27,6 +28,10 @@ func NewChinesePokerGame(params interface{}) *Game {
 	}
 
 	return &game
+}
+
+func (g *Game) GetGameName() string {
+	return GameName
 }
 
 func (g *Game) checkGameOver() bool {
@@ -140,6 +145,8 @@ func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error
 	curState := State{
 		Hands:         g.getResponseCards(requestingPlayerIndex),
 		IsCurrentTurn: false,
+		Iteration:     g.iteration,
+		PlayerIndex:   requestingPlayerIndex,
 	}
 
 	if requestingPlayerIndex == g.playerTurnIndex {

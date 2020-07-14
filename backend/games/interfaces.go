@@ -5,4 +5,5 @@ type IGame interface {
 	GetState(playerIndex int) (state interface{}, err error)
 	GetResult() (result interface{}, err error)
 	GetPlayerNum() (min int, max int)
+	GetGameName() string
 }
