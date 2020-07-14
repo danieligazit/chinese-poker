@@ -1,117 +1,91 @@
-import React, { useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import uuid from "uuid/v4";
-import PlayingCardsList from './PlayingCard/PlayingCardsList';
-import { PlayingCard } from './PlayingCard/Card'
+import React, {component, useState} from "react";
+import { naturalWidth, naturalHeight } from './PlayingCard/Card'
+import { Game } from "./Game"
+const util = require('util');
+const WebSocket = require('ws');
 
-const minColumnHeight = "213px";
+const baseURL = "5ed886257c7c46e28cdf3b5d46f59003.vfs.cloud9.us-east-1.amazonaws.com:8081"
 
-
-const state = {
-  "hands": [
-    ["1h"],
-    [],
-    [],
-    ["jh"],
-    []
-  ],
-  "isCurrentTurn": true,
-  "topCard": "qs",
-  "iteration": 1
-}
-
-
-const onDragEnd = (result, origin, setOrigin, columns, setColumns) => {
-  if (!result.destination) return;
-  const { source, destination } = result;
-  
-  if (destination.droppableId === source.droppableId) return;  
+class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.ws = new WebSocket(`ws://${baseURL}/test?clientId=1`)
+    this.ws.binaryType = 'arraybuffer';
     
-  const destColumn = columns[destination.index];
-  const removed = origin;
-  destColumn.splice(destination.index, 0, removed);
-  setColumns({
-    ...columns,
-    destColumn
-  });
-  setOrigin(null)
+    this.ws.on('open', () => {
+      let data = Buffer.from(JSON.parse({"actionType": "connect"}).data)
+      console.log(data)
+    })
+    
+    this.ws.on('message', (data) => {
+      var buf = new Uint8Array(data).buffer;
+      var dec = new util.TextDecoder("utf-8");
+      console.log(dec.decode(buf));
+    })
+    
+    this.game = React.createRef();
   
-};
+  // handleClick = () => {
+  //   this.game.current.setGameState({
+  //       hands: [
+  //         [
+  //           ["1h", "3s", "4s"],
+  //           ["Qs", "Kc"],
+  //           ["Td", "Qc"],
+  //           ["Jh", "3c", "Ts"],
+  //           ["8d", "1h"]
+  //         ],
+  //         [
+  //           ["nocard", "7s", "2h"],
+  //           ["7c", "Kd", "1c"],
+  //           ["nocard", "7d", "Qh"],
+  //           ["nocard", "Ts", "Jh"],
+  //           ["1c", "Qh", "Tc"]
+  //         ]
+  //       ],
+  //       isCurrentTurn: true,
+  //       topCard: "Qs",
+  //       iteration: 3,
+  //       playerIndex: 0
+      
+  //     }
+  //   )
+  //   setTimeout(() => {
+  //     console.log('slept')
+  //   this.game.current.setGameState({
+  //       hands: [
+  //         [
+  //           ["1h", "3s", "4s"],
+  //           ["Qs", "Kc", ],
+  //           ["Td", "Qc"],
+  //           ["Jh", "3c", "Ts"],
+  //           ["8d", "1h"]
+  //         ],
+  //         [
+  //           ["Js", "7s", "2h"],
+  //           ["7c", "Kd", "1c"],
+  //           ["nocard", "7d", "Qh"],
+  //           ["nocard", "Ts", "Jh"],
+  //           ["1c", "Qh", "Tc"]
+  //         ]
+  //       ],
+  //       isCurrentTurn: true,
+  //       topCard: "Qs",
+  //       iteration: 3,
+  //       playerIndex: 0
+      
+  //     }
+  //   )
+  //   }, 3000)
+  }
+  render(){
+    return(
+      <div onClick={this.handleClick}>
+        <Game ref={this.game}/>
+      </div>
+    )
+  }
+}
 
-export const Column = ({values, id, isDropDisabled, isDragDisabled}) => {
-  return (
-    <div style={{ margin: 8 }}>
-      <Droppable droppableId={id} key={id} isDropDisabled={isDropDisabled}>
-        {(provided, snapshot) => {
-          return (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              style={{
-                background: snapshot.isDraggingOver
-                  ? "lightblue"
-                  : "lightgrey",
-                padding: 4,
-                width: 150,
-                minHeight: minColumnHeight
-              }}
-            >
-              { values.map((value, index) => {
-                console.log("columnValues", values)
-                return (
-                  <PlayingCard
-                    value = {value}
-                    index = {index}
-                    isDragDisabled = {isDragDisabled}
-                  />
-                  
-                )})
-              }
-              {provided.placeholder}
-            </div>
-          );
-        }}
-      </Droppable>
-    </div>
-  )
-}
-function App() {
-  
-  const [columns, setColumns] = useState(state.hands);
-  const [origin, setOrigin] = useState(state.topCard); 
-  return (
-    <div style={{ display: "flex", justifyContent: "center", height: "100%" }}>
-      <DragDropContext
-        onDragEnd={result => onDragEnd(result, origin, setOrigin, columns, setColumns)}
-      > 
-        
-        <div>
-          {Object.entries(columns).map((values, index) => {
-            return (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  display: "inline-block", 
-                  zoom: "1", 
-                  verticalAlign: "top"
-                }}
-                key={"column-"+ index}
-                
-              >
-                <Column id={"column-" + index} values={values} isDropDisabled={false} isDragDisabled={true}/>
-              </div>
-                
-            );
-          })}
-        </div>
-        <div>
-          <Column id='origin' values={origin ? [origin] : []} isDropDisabled = {true}m isDragDisabled={false}/>
-        </div>
-      </DragDropContext>
-    </div>
-  );
-}
 
 export default App;

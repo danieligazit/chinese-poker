@@ -37,7 +37,14 @@ func NewServer(id, password string, game games.IGame) *Server {
 	return &server
 }
 
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+}
+
 func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
+	fmt.Println(w.Header())
+	setupResponse(&w, req)
 
 	if _, maxClientNumber := s.game.GetPlayerNum(); len(s.clients) >= maxClientNumber {
 		http.Error(w, "Server is full", http.StatusLocked)
