@@ -6,7 +6,7 @@ import (
 	"github.com/danieligazit/chinese-poker/backend/utility"
 )
 
-func NewChinesePokerGame() *Game {
+func NewChinesePokerGame(params interface{}) *Game {
 	deck := poker.NewDeck()
 	card := deck.Draw(1)[0]
 
