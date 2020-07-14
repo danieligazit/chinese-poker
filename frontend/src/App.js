@@ -1,23 +1,22 @@
-import React, {component, useState} from "react";
-import { naturalWidth, naturalHeight } from './PlayingCard/Card'
+import React from "react";
 import { Game } from "./Game"
 const util = require('util');
 const WebSocket = require('ws');
 
-const baseURL = "5ed886257c7c46e28cdf3b5d46f59003.vfs.cloud9.us-east-1.amazonaws.com:8081"
+const baseURL = "localhost:8081"
 
 class App extends React.Component {
   constructor(props) {
     super(props)
-    this.ws = new WebSocket(`ws://${baseURL}/test?clientId=1`)
-    this.ws.binaryType = 'arraybuffer';
+    const ws = new WebSocket(`ws://${baseURL}/test?clientId=1`)
+    ws.binaryType = 'arraybuffer';
     
-    this.ws.on('open', () => {
-      let data = Buffer.from(JSON.parse({"actionType": "connect"}).data)
-      console.log(data)
+    ws.on('open', () => {
+      this.data = Buffer.from(JSON.parse({"actionType": "connect"}).data)
+      
     })
     
-    this.ws.on('message', (data) => {
+    ws.on('message', (data) => {
       var buf = new Uint8Array(data).buffer;
       var dec = new util.TextDecoder("utf-8");
       console.log(dec.decode(buf));
@@ -81,6 +80,7 @@ class App extends React.Component {
   render(){
     return(
       <div onClick={this.handleClick}>
+        {this.data}
         <Game ref={this.game}/>
       </div>
     )
