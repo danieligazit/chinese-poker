@@ -10,6 +10,8 @@ const PlayerNumber = 2
 const HandNumber = 5
 const HandSize = 5
 
+const GameName = "poker"
+
 type Game struct {
 	deck                    *poker.Deck
 	hands                   [PlayerNumber][HandNumber][]poker.Card
@@ -33,6 +35,8 @@ type State struct {
 	Top           *poker.Card                             `json:"top"`
 	Hands         [PlayerNumber][HandNumber][]*poker.Card `json:"hands"`
 	IsCurrentTurn bool                                    `json:"isCurrentTurn"`
+	Iteration     int                                     `json:"iteration"`
+	PlayerIndex   int                                     `json:"playerIndex"`
 }
 
 type Evaluation struct {

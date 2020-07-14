@@ -26,6 +26,14 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:2e76a73cb51f42d63a2a1a85b3dc5731fd4faf6821b434bd0ef2c099186031d6"
+  name = "github.com/rs/xid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "15d26544def341f036c5f8dca987a4cbe575032c"
+  version = "v1.2.1"
+
+[[projects]]
   digest = "1:05eebdd5727fea23083fce0d98d307d70c86baed644178e81608aaa9f09ea469"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -50,6 +58,7 @@
   input-imports = [
     "github.com/chehsunliu/poker",
     "github.com/gorilla/websocket",
+    "github.com/rs/xid",
     "github.com/sirupsen/logrus",
   ]
   solver-name = "gps-cdcl"

@@ -86,6 +86,7 @@ func (c *Client) readFromWebSocket() {
 	if err != nil {
 		log.Errorf(err.Error())
 		c.doneCh <- true
+		c.server.HandleClientDissconnect(c.Id)
 	} else if messageType != websocket.BinaryMessage {
 		log.Errorf("Non binary message recived, ignoring")
 	} else {

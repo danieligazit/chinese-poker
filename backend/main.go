@@ -1,40 +1,59 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/danieligazit/chinese-poker/backend/communication"
+	"github.com/danieligazit/chinese-poker/backend/games"
 	"github.com/danieligazit/chinese-poker/backend/games/chinesepoker"
+	"github.com/danieligazit/chinese-poker/backend/utility"
+	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
+type NewLobbyResponse struct {
+	LobbyId string `json:"lobbyId"`
+	URL     string `json:"url"`
+}
+
+func newLobby(w http.ResponseWriter, req *http.Request) {
+	utility.SetupResponseCORS(&w, req)
+
+	gameStr := req.URL.Path[len("/new/"):]
+	game, err := NewGame(gameStr, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	serverId := xid.New().String()
+	communication.NewServer(serverId, game)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(NewLobbyResponse{serverId, fmt.Sprintf("/%s/%s", gameStr, serverId)})
+
+}
+
+type gameConstructor func(interface{}) games.IGame
+
+var game2Constructor = map[string]gameConstructor{
+	chinesepoker.GameName: chinesepoker.NewGame,
+}
+
+func NewGame(gameStr string, params interface{}) (game games.IGame, err error) {
+	constructor, exists := game2Constructor[gameStr]
+	if !exists {
+		err = fmt.Errorf("Game %s does not exists", gameStr)
+		return
+	}
+
+	game = constructor(params)
+	return
+}
+
 func main() {
-	game := chinesepoker.NewChinesePokerGame()
-	communication.NewServer("test", "", game)
-	// fmt.Println(g.GetState(0))
-	// fmt.Println(g.GetState(1))
-
-	// player := 0
-	// for true {
-	// 	var handIndex int
-	// 	_, err := fmt.Scanf("%d", &handIndex)
-
-	// 	legal, response, gameOver, err := g.MakeMove(player, chinesepoker.ChinesePokerMove{
-	// 		HandIndex: handIndex,
-	// 	})
-	// 	fmt.Printf("legal=%t response=%v gameOver=%t err=%s\n", legal, response, gameOver, err)
-	// 	s1, _ := g.GetState(0)
-	// 	s2, _ := g.GetState(1)
-
-	// 	fmt.Println(s1)
-	// 	fmt.Println(s2)
-	// 	if gameOver {
-	// 		break
-	// 	}
-
-	// 	player = (player + 1) % 2
-	// }
-	// fmt.Println(g.GetResult())
+	http.HandleFunc("/new/", newLobby)
 	flag.Parse()
 
 	log.Info("serving on port 8081")
