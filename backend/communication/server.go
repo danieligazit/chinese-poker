@@ -137,5 +137,6 @@ func (s *Server) sendConnectionStatus() {
 	for clientId, _ := range s.clients {
 		clientIds = append(clientIds, clientId)
 	}
-	s.sendToAllClients(ClientMessage{ActionType: clientConnectionStatusResponse, Action: clientIds})
+	minPlayers, maxPlayers := s.game.GetPlayerNum()
+	s.sendToAllClients(ClientMessage{ActionType: clientConnectionStatusResponse, Action: ConnectionStatus{clientIds, s.started, minPlayers, maxPlayers}})
 }

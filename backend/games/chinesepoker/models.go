@@ -4,13 +4,13 @@ import (
 	"github.com/chehsunliu/poker"
 )
 
-const InitIterations = 4
+const InitIterations = 1
 const LastIteration = 5
 const PlayerNumber = 2
 const HandNumber = 5
 const HandSize = 5
 
-const GameName = "poker"
+const GameName = "chinese-poker"
 
 type Game struct {
 	deck                    *poker.Deck
