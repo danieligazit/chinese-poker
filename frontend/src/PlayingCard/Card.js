@@ -1,16 +1,18 @@
 import React from "react";
 import { DragSource, DragPreviewImage } from "react-dnd";
 import PlayingCardsList from './PlayingCardsList';
-
+import "./PlayingCard.css"
 export const naturalWidth = 225
-export const naturalHeight = 134
-export const PlayingCard = ({state}) => {
-  const cardImage = state.value? PlayingCardsList[state.value] : PlayingCardsList['b']
+export const naturalHeight = "134px"
+
+export const PlayingCard = ({value}) => {
+  const cardImage = value ? PlayingCardsList[value] : PlayingCardsList['b']
   return (
     <div>
-      <DragPreviewImage src={cardImage} />
+      <DragPreviewImage src={PlayingCardsList[value]} />
       <div>
         <img
+          className="Playing-card"
           style = {{
             width: "100%"
           }}

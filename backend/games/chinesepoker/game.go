@@ -109,8 +109,11 @@ func (g *Game) MakeMove(playerIndex int, moveI interface{}) (legal, gameOver boo
 	legal = true
 	response = moveResponse
 
-	gameOver = g.checkGameOver()
-	g.gameOver = gameOver
+	if gameOver = g.checkGameOver(); gameOver {
+		g.gameOver = gameOver
+	} else {
+		err = g.updateTurn()
+	}
 
 	return
 }

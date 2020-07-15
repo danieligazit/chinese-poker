@@ -1,88 +1,62 @@
 import React from "react";
 import { Game } from "./ChinesePoker"
-const util = require('util');
-const WebSocket = require('ws');
+const TextEncoder = require('text-encoder-lite').TextEncoderLite;
+const TextDecoder = require('text-encoder-lite').TextDecoderLite;
+const WS = require('ws');
 
-const baseURL = "localhost:8081"
+const baseURL = "34.204.197.224:8081"
+// const ws = new WebSocket("ws://3.237.28.197:8081/chinese-poker/bs7e5g9o3vkf67aasg9g?clientId=1")
+
+async function messageToJson(message){
+  return message.data.arrayBuffer()
+    .then(buf => {
+      return JSON.parse(String.fromCharCode.apply(null, new Uint8Array(buf)))     
+    })
+}
+
+function jsonToMessage(json){
+  return new TextEncoder('utf-8').encode(JSON.stringify(json))
+}
 
 export class ChinesePokerGame extends React.Component {
   constructor(props) {
     super(props)
     
-    const ws = new WebSocket(`ws://${props.baseURL}/${props.endpoint}?clientId=1`)
-    ws.binaryType = 'arraybuffer';
-    
-    ws.on('open', () => {
-      this.data = Buffer.from(JSON.parse({"actionType": "connect"}).data)
-      
-    })
-    
-    ws.on('message', (data) => {
-      var buf = new Uint8Array(data).buffer;
-      var dec = new util.TextDecoder("utf-8");
-      console.log(dec.decode(buf));
-    })
-    
+    this.url = `ws://${baseURL}${props.endpoint}?clientId=${window.prompt("insert id (integer)")}`
+    this.state = {
+      active: false
+    }
     this.game = React.createRef();
-  
-  // handleClick = () => {
-  //   this.game.current.setGameState({
-  //       hands: [
-  //         [
-  //           ["1h", "3s", "4s"],
-  //           ["Qs", "Kc"],
-  //           ["Td", "Qc"],
-  //           ["Jh", "3c", "Ts"],
-  //           ["8d", "1h"]
-  //         ],
-  //         [
-  //           ["nocard", "7s", "2h"],
-  //           ["7c", "Kd", "1c"],
-  //           ["nocard", "7d", "Qh"],
-  //           ["nocard", "Ts", "Jh"],
-  //           ["1c", "Qh", "Tc"]
-  //         ]
-  //       ],
-  //       isCurrentTurn: true,
-  //       topCard: "Qs",
-  //       iteration: 3,
-  //       playerIndex: 0
-      
-  //     }
-  //   )
-  //   setTimeout(() => {
-  //     console.log('slept')
-  //   this.game.current.setGameState({
-  //       hands: [
-  //         [
-  //           ["1h", "3s", "4s"],
-  //           ["Qs", "Kc", ],
-  //           ["Td", "Qc"],
-  //           ["Jh", "3c", "Ts"],
-  //           ["8d", "1h"]
-  //         ],
-  //         [
-  //           ["Js", "7s", "2h"],
-  //           ["7c", "Kd", "1c"],
-  //           ["nocard", "7d", "Qh"],
-  //           ["nocard", "Ts", "Jh"],
-  //           ["1c", "Qh", "Tc"]
-  //         ]
-  //       ],
-  //       isCurrentTurn: true,
-  //       topCard: "Qs",
-  //       iteration: 3,
-  //       playerIndex: 0
-      
-  //     }
-  //   )
-  //   }, 3000)
   }
+  
+  componentDidMount(){
+    this.ws = new WebSocket(this.url)
+    this.ws.onopen = () => {
+      this.ws.send(jsonToMessage({"actionType": "connect"}))
+      
+    }
+    
+    this.ws.onmessage = (message) => {
+      messageToJson(message)
+        .then((data) => {
+          if (data.actionType === "setState") {
+            this.game.current.setGameState(data.action)
+          } else if (data.actionType === "startGame"){
+            this.setState({active: true})
+          }
+        })
+    }
+  }
+  
+  makeMove(move){
+    this.ws.send(jsonToMessage({"actionType": "makeMove", "action": move}))
+  }
+  
   render(){
     return(
       <div onClick={this.handleClick}>
         {this.data}
-        <Game ref={this.game}/>
+        <Game ref={this.game} makeMove={this.makeMove.bind(this)} active={this.state.active}/>
       </div>
     )
   }

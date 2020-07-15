@@ -1,13 +1,13 @@
 import React from "react";
 import { DropTarget } from "react-dnd";
 import {PlayingCard} from "./../PlayingCard/Card"
+import Grid from '@material-ui/core/Grid';
 
-export const Column = ({values, index, addable, originCardIndex, originCardState, originCardSetter, section}) => {
+export const Column = ({values, index, addable, originCardSetter, section}) => {
   return (
     <div style= {{
       flexDirection: "column",
       alignItems: "center",
-      display: "inline-block", 
       zoom: "1", 
       verticalAlign: "top",
       backgroundColor: "black",
@@ -16,21 +16,20 @@ export const Column = ({values, index, addable, originCardIndex, originCardState
     }}
     
     onClick = {() => {
-        if (originCardSetter){
-          originCardSetter({
-            ...originCardState,
-            columnIndex: index
-          })
-        }
-      }
-    }
+      console.log(addable)
+      // if (!addable) {return}
+      originCardSetter(index)
+    }}
+    
     >
+      <Grid container justify="center" spacing={2}>
+      </Grid>
       {values.map((value, cardIndex) => {
         return (
-          <PlayingCard state={{columnIndex: index, value: value}} key={section+"-column-"+index+"-card-"+cardIndex}/>
+          <PlayingCard value={value} index={index} key={section+"-column-"+index+"-card-"+cardIndex}/>
         )
       })}
-      {addable && originCardState.columnIndex == index && <PlayingCard state={originCardState} key={"origin-"+index} />}
+      
     </div>
   )
 } 

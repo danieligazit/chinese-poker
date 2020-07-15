@@ -6,82 +6,95 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 
 const cardImageRatio = naturalHeight / naturalWidth
 
-
-
-function renderOponenet(gameState) {
-  if (!gameState.hands) {
-    return
-  }
-  
-  return gameState.hands[(gameState.playerIndex + 1) % 2].map((hand, index) => {
-    return (
-      <div style = {{width: "25%", maxWidth:naturalWidth}}>
-        <Column 
-          values={hand}
-          key={"openent-column-"+index} 
-          index={index}
-          addable={false} 
-          section="oponent"
-        />
-      </div>
-    )
-  })
-}
-
-function renderMy(gameState, originCardState, setOriginCardState){
-  if (!gameState.hands){
-    return
-  }
-  return gameState.hands[gameState.playerIndex].map((hand, index) => {
-    return (  
-      <div style = {{width: "25%", maxWidth:naturalWidth}}>
-        <Column 
-          values={hand} 
-          key={"column-"+index} 
-          index={index} 
-          section="current"
-          addable={gameState.iteration > gameState.hands[gameState.playerIndex][index].length} 
-          originCardState={originCardState} 
-          originCardSetter={setOriginCardState}
-        />
-      </div>
-    ) 
-  })
-}
-
-
 export class Game extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       gameState: {},
-      originCardState: {columnIndex: -1, value: "nocard"}
     }
   }  
   
   setGameState(newState){
+    let playerIndex = (newState.playerIndex + 1) % 2
+    
+    newState.hands[playerIndex].map((hand, handIndex) => {
+      while (hand.length < newState.iteration) {
+        hand.push("nocard")
+      }
+      hand = hand.reverse()
+      // newState.hands[playerIndex][handIndex] = hand
+    })
+    
     this.setState({
-      ...this.state,
       gameState: newState,
       originCardState: {
         ...this.state.originCardState,
-        value: newState.top ? newState.top : "nocard"
+        value: newState.top ? newState.top : "nocard",
+        columnIndex: -1,
       }
     })
   }
   
-  setOriginCardState(newColumnIndex){
-    this.setState({
-      ...this.state,
-      originCardState: {
-        ...this.state.originCardState,
-        columnIndex: newColumnIndex
-      }
+  
+  renderMy(){
+    if (!this.state.gameState.hands){
+      return
+    }
+    const hand = this.state.gameState.hands[this.state.gameState.playerIndex]
+    return hand.map((hand, index) => {
+      return (  
+        <div style = {{width: "25%", maxWidth:naturalWidth}}>
+          <Column 
+            values={hand} 
+            key={"column-"+index} 
+            index={index} 
+            section="current"
+            addable={this.props.active && hand[index].length === this.state.gameState -1 }
+            originCardSetter={this.setOriginCard.bind(this)}
+          />
+        </div>
+      ) 
     })
   }
-  
-  setCardColumn(columnIndex) {
-    this.state.originCardState.columnIndex = columnIndex
+
+  renderOponenet() {
+    if (!this.state.gameState.hands) {return}
+    
+    return this.state.gameState.hands[(this.state.gameState.playerIndex + 1) % 2].map((hand, index) => {
+      return (
+        <div style = {{width: "25%", maxWidth:naturalWidth}}>
+          <Column 
+            values={hand}
+            key={"openent-column-"+index} 
+            index={index}
+            addable={false} 
+            section="oponent"
+          />
+        </div>
+      )
+    })
+  }
+
+  setOriginCard(newColumnIndex){
+    console.log('active', this.props.active)
+    // if (!this.props.active){return}
+    if( this.state.originCardState.columnIndex !== -1 || this.state.originCardState.value === "nocard"){return}
+    
+    
+    this.setState(prevState => {
+      const prev = prevState.gameState
+      let newHands = prev.hands
+      newHands[prev.playerIndex][newColumnIndex] = [...newHands[prev.playerIndex][newColumnIndex], prev.top] 
+      return {
+        gameState: {
+          ...prev,
+          hands: newHands,
+          top: "nocard"
+        }
+      }
+    })
+    
+    this.props.makeMove({"handIndex": newColumnIndex})
   }
   
   render() {return (
@@ -90,16 +103,14 @@ export class Game extends React.Component {
         <div  style={{
           display: "flex", 
           justifyContent: "center", 
-          height: "100%",
         }}>
-          {renderOponenet(this.state.gameState)}
+          {this.renderOponenet()}
         </div>
         <div  style={{
           display: "flex", 
           justifyContent: "center", 
-          height: "100%"
         }}>
-          {renderMy(this.state.gameState, this.state.originCardState, this.setOriginCardState)}
+          {this.renderMy()}
         </div>
         <div  style={{
           display: "flex", 
@@ -108,8 +119,7 @@ export class Game extends React.Component {
           backgroundColor: "green"
         }}>
           
-          {this.state.originCardState.columnIndex == -1 && <PlayingCard key={"origin"} state={this.state.originCardState}/>}
-          {this.state.originCardState.columnIndex != -1 && <PlayingCard key={"origin"} state={{cardPosition: -1, value: 'nocard'}}/>}
+          {<PlayingCard key={"origin"} value={this.state.gameState.top}/>}
         </div>
         
       </DndProvider>

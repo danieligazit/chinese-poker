@@ -1,6 +1,6 @@
 let PlayingCardsList = {};
 let suits = ['c', 'd', 'h', 's'];
-let faces = ['T', 'J', 'Q', 'K'];
+let faces = ['T', 'J', 'Q', 'K', 'A'];
 
 let addSuits = (i, PlayingCardsList) => {
 	for(let suit of suits){
@@ -8,7 +8,7 @@ let addSuits = (i, PlayingCardsList) => {
 	}
 }
 
-for(let i = 1; i < 9; i++){
+for(let i = 2; i <= 9; i++){
 	addSuits(i, PlayingCardsList);
 }
 

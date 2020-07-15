@@ -4,13 +4,12 @@ import {ChinesePokerGame} from "./ChinesePoker/Game"
 export default class Game extends React.Component{
   constructor(props){
     super(props)
-    this.gameSelection = props.gameSelection
   }
   render() {
-    switch (this.gameSelection){
+    switch (this.props.match.params.game){
       case 'chinese-poker':
         return (
-          <ChinesePokerGame />
+          <ChinesePokerGame endpoint={"/"+this.props.match.params.game+"/"+this.props.match.params.lobbyId}/>
         )
       default:
         return <h1>oops</h1>
