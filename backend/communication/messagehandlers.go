@@ -18,7 +18,7 @@ const errorResponse = "error"
 
 type clientMessageHandler func(clientIndex uint64, clientMessage ClientMessage) (err error)
 
-func (s *Server) userConnectHandlers(clientId uint64, clientMessage ClientMessage) (err error) {
+func (s *Server) userConnectHandler(clientId uint64, clientMessage ClientMessage) (err error) {
 	if _, exists := s.clientId2Index[clientId]; !exists {
 		s.clientId2Index[clientId] = len(s.clientId2Index)
 	}
