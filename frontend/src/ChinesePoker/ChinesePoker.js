@@ -22,13 +22,12 @@ export class Game extends React.Component {
         hand.push("nocard")
       }
       hand = hand.reverse()
-      // newState.hands[playerIndex][handIndex] = hand
     })
     
     this.setState({
       gameState: newState,
       originCardState: {
-        ...this.state.originCardState,
+        ...this.state.gameState.originCardState,
         value: newState.top ? newState.top : "nocard",
         columnIndex: -1,
       }
@@ -40,8 +39,10 @@ export class Game extends React.Component {
     if (!this.state.gameState.hands){
       return
     }
-    const hand = this.state.gameState.hands[this.state.gameState.playerIndex]
-    return hand.map((hand, index) => {
+    console.log(this.state.gameState.hands)
+    const hands = this.state.gameState.hands[this.state.gameState.playerIndex]
+    console.log("active", this.props.active)
+    return hands.map((hand, index) => {
       return (  
         <div style = {{width: "25%", maxWidth:naturalWidth}}>
           <Column 
@@ -49,7 +50,7 @@ export class Game extends React.Component {
             key={"column-"+index} 
             index={index} 
             section="current"
-            addable={this.props.active && hand[index].length === this.state.gameState -1 }
+            addable={this.props.active && hand.length === this.state.gameState.iteration -1 }
             originCardSetter={this.setOriginCard.bind(this)}
           />
         </div>
@@ -76,9 +77,8 @@ export class Game extends React.Component {
   }
 
   setOriginCard(newColumnIndex){
-    console.log('active', this.props.active)
-    // if (!this.props.active){return}
-    if( this.state.originCardState.columnIndex !== -1 || this.state.originCardState.value === "nocard"){return}
+    if (!this.props.active){return}
+    if( this.state.gameState.columnIndex === "nocard"){return}
     
     
     this.setState(prevState => {

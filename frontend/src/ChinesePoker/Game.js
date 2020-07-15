@@ -22,7 +22,7 @@ export class ChinesePokerGame extends React.Component {
   constructor(props) {
     super(props)
     
-    this.url = `ws://${baseURL}${props.endpoint}?clientId=${window.prompt("insert id (integer)")}`
+    this.url = `ws://${baseURL}${props.endpoint}?clientId=${"1"}`//window.prompt("insert id (integer)") 
     this.state = {
       active: false
     }
@@ -43,6 +43,9 @@ export class ChinesePokerGame extends React.Component {
             this.game.current.setGameState(data.action)
           } else if (data.actionType === "startGame"){
             this.setState({active: true})
+          } else if (data.actionType === "clientConnectionStatus"){
+            console.log(data.action)
+            this.setState({active: data.action.active})
           }
         })
     }
