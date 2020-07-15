@@ -1,6 +1,6 @@
 import React  from "react";
 import { Column } from './Column';
-import { naturalWidth, naturalHeight, PlayingCard } from './PlayingCard/Card'
+import { naturalWidth, naturalHeight, PlayingCard } from './../PlayingCard/Card'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 

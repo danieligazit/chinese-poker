@@ -1,6 +1,6 @@
 import React from "react";
 import { DropTarget } from "react-dnd";
-import {PlayingCard} from "./PlayingCard/Card"
+import {PlayingCard} from "./../PlayingCard/Card"
 
 export const Column = ({values, index, addable, originCardIndex, originCardState, originCardSetter, section}) => {
   return (

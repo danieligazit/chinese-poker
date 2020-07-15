@@ -1,11 +1,11 @@
 import React from "react";
-import { Game } from "./Game"
+import { Game } from "./ChinesePoker"
 const util = require('util');
 const WebSocket = require('ws');
 
 const baseURL = "localhost:8081"
 
-class ChinesePoker extends React.Component {
+export class ChinesePokerGame extends React.Component {
   constructor(props) {
     super(props)
     
