@@ -7,11 +7,11 @@ import (
 )
 
 // NewClient initializes a new Client struct with given websocket.
-func NewClient(clientId uint64, ws *websocket.Conn, server *Server) *Client {
+func NewClient(clientId uint64, ws *websocket.Conn, lobby *Lobby) *Client {
 	ch := make(chan *[]byte, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{clientId, ws, ch, doneCh, server}
+	return &Client{clientId, ws, ch, doneCh, lobby}
 }
 
 // Listen Write and Read request via chanel
@@ -86,10 +86,10 @@ func (c *Client) readFromWebSocket() {
 	if err != nil {
 		log.Errorf(err.Error())
 		c.doneCh <- true
-		c.server.HandleClientDissconnect(c.Id)
+		c.lobby.HandleClientDissconnect(c.Id)
 	} else if messageType != websocket.BinaryMessage {
 		log.Errorf("Non binary message recived, ignoring")
 	} else {
-		c.server.HandleClientMessage(c.Id, data)
+		c.lobby.HandleClientMessage(c.Id, data)
 	}
 }

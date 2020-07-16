@@ -14,27 +14,14 @@ type Client struct {
 	ws     *websocket.Conn
 	ch     chan *[]byte
 	doneCh chan bool
-	server *Server
+	lobby  *Lobby
 }
 
-type Server struct {
-	id                  string
-	clients             map[uint64]*Client
-	clientId2Index      map[uint64]int
-	upgrader            *websocket.Upgrader
-	game                games.IGame
-	started             bool
-	messageType2Handler map[string]clientMessageHandler
-}
-
-type ClientMessage struct {
-	ActionType string      `json:"actionType"`
-	Action     interface{} `json:"action"`
-}
-
-type ConnectionStatus struct {
-	ClientIds  []uint64 `json:"clientIds"`
-	Active     bool     `json:"active"`
-	MinPlayers int      `json:"minPlayers"`
-	MaxPlayers int      `json:"maxPlayers"`
+type Lobby struct {
+	id               string
+	clients          map[uint64]*Client
+	upgrader         *websocket.Upgrader
+	game             games.IGame
+	userNameRegistry *utils.UserNamesRegistry
+	messageHandler   *MessageHandler
 }

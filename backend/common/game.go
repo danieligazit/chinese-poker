@@ -1,4 +1,4 @@
-package games
+package common
 
 type IGame interface {
 	MakeMove(playerIndex int, moveI interface{}) (legal, gameOver bool, response interface{}, err error)
