@@ -2,35 +2,36 @@ import React from "react";
 import { DragSource, DragPreviewImage } from "react-dnd";
 import PlayingCardsList from './PlayingCardsList';
 import "./PlayingCard.css"
-export const naturalWidth = 225
-export const naturalHeight = "134px"
+import "./../Column.css"
 
-export const PlayingCard = ({value}) => {
-  const cardImage = value ? PlayingCardsList[value] : PlayingCardsList['b']
+export const naturalWidth = 225
+export const naturalHeight = 314
+
+
+export const PlayingCard = ({value, index=0, section, text}) => {
+  if (!value){value = "flipped"}
   return (
-    <div>
-      <DragPreviewImage src={PlayingCardsList[value]} />
-      <div>
-        <img
-          className="Playing-card"
-          style = {{
-            width: "100%"
-          }}
-          src = {cardImage}
-        />
-      </div>
+    <div
+    className="Playing-card" style = {{zIndex: section === "oponent" ? 10 - index : index, height: naturalHeight}}>
+      {value !== "nocard" && 
+      <img draggable={false}
+        src = {PlayingCardsList[value]}
+      />}
     </div>
+    
   );
+  
+  
 }
 
-export default DragSource(
-  "PlayingCard",
-  {
-    beginDrag: () => ({}),
-  },
-  (connect, monitor) => ({
-    connectDragSource: connect.dragSource(),
-    connectDragPreview: connect.dragPreview(),
-    isDragging: monitor.isDragging(),
-  }),
-)(PlayingCard)
+// export default DragSource(
+//   "PlayingCard",
+//   {
+//     beginDrag: () => ({}),
+//   },
+//   (connect, monitor) => ({
+//     connectDragSource: connect.dragSource(),
+//     connectDragPreview: connect.dragPreview(),
+//     isDragging: monitor.isDragging(),
+//   }),
+// )(PlayingCard)

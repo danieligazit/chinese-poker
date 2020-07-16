@@ -5,7 +5,7 @@ import "../../node_modules/react-progress-button/react-progress-button.css";
 import Game from './../Games'
 import {Redirect} from "react-router-dom"
 
-const baseURL = "34.204.197.224:8081"
+const baseURL = "3.235.139.208:8081"
 
 
 export default class CreateLobby extends React.Component {

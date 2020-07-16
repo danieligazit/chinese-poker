@@ -1,0 +1,40 @@
+.Playing-card{
+    position: relative;
+}
+.vhand-compact {
+	display: inline-block;
+	vertical-align: top;
+}
+.vhand-compact .Playing-card:first-child { 
+	display: block; 
+	margin-top: 0px;
+}
+.vhand-compact .Playing-card 
+{
+	display: block; 
+	margin-top: -200px;
+}
+.vhand-compact.active-hand .Playing-card:hover,
+.active-hand .vhand-compact .Playing-card:hover { 
+	display: block; 
+	padding-right: 0px;
+}
+
+.vhand-compact-reversed {
+	display: inline-block;
+	vertical-align: top;
+}
+.vhand-compact-reversed .Playing-card:last-child { 
+	display: block; 
+	margin-bottom: 0px;
+}
+.vhand-compact-reversed .Playing-card 
+{
+	display: block; 
+	margin-bottom: -200px;
+}
+.vhand-compact-reversed.active-hand .Playing-card:hover,
+.active-hand .vhand-compact-reversed .Playing-card:hover { 
+	display: block; 
+	padding-right: 0px;
+}
