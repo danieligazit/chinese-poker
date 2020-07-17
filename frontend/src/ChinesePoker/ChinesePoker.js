@@ -1,10 +1,7 @@
 import React  from "react";
 import { Column } from './Column';
 import { naturalWidth, naturalHeight, PlayingCard } from './../PlayingCard/Card'
-import { DndProvider } from 'react-dnd'
-import { HTML5Backend } from 'react-dnd-html5-backend'
-
-const cardImageRatio = naturalHeight / naturalWidth
+import { motion } from "framer-motion"
 
 export class Game extends React.Component {
   constructor(props) {
@@ -15,22 +12,21 @@ export class Game extends React.Component {
   }  
   
   setGameState(newState){
-    let playerIndex = (newState.playerIndex + 1) % 2
-    
-    newState.hands[playerIndex].map((hand, handIndex) => {
-      while (hand.length < newState.iteration) {
-        hand.push("nocard")
-      }
-      hand = hand.reverse()
+    console.log(newState)
+    newState.hands.map((playerHands, playerIndex) => {
+      playerHands.map((hand, handIndex) => {
+        // hand.map((card, cardIndex) => {
+        //   if (!card){hand[handIndex] = "b"}
+        // })
+        while (hand.length < newState.iteration) {
+          hand.push("nocard")
+        }
+        if (playerIndex !== newState.playerIndex) {hand.reverse()}
+      })
     })
     
     this.setState({
       gameState: newState,
-      originCardState: {
-        ...this.state.gameState.originCardState,
-        value: newState.top ? newState.top : "nocard",
-        columnIndex: -1,
-      }
     })
   }
   
@@ -39,19 +35,17 @@ export class Game extends React.Component {
     if (!this.state.gameState.hands){
       return
     }
-    console.log(this.state.gameState.hands)
     const hands = this.state.gameState.hands[this.state.gameState.playerIndex]
-    console.log("active", this.props.active)
     return hands.map((hand, index) => {
       return (  
-        <div style = {{width: "25%", maxWidth:naturalWidth}}>
+        <div style = {{width: "20%", maxWidth:naturalWidth}} key={"column-"+index} >
           <Column 
-            values={hand} 
-            key={"column-"+index} 
+            values={hand}
             index={index} 
             section="current"
-            addable={this.props.active && hand.length === this.state.gameState.iteration -1 }
+            addable={this.props.active && hand.filter(x => x).length === this.state.gameState.iteration -1 && this.state.gameState.top !== "nocard"}
             originCardSetter={this.setOriginCard.bind(this)}
+            iteration = {this.state.gameState.iteration}
           />
         </div>
       ) 
@@ -63,13 +57,14 @@ export class Game extends React.Component {
     
     return this.state.gameState.hands[(this.state.gameState.playerIndex + 1) % 2].map((hand, index) => {
       return (
-        <div style = {{width: "25%", maxWidth:naturalWidth}}>
+        <div style = {{width: "20%", maxWidth:naturalWidth}}  key={"oponent-column-"+index} >
           <Column 
             values={hand}
-            key={"openent-column-"+index} 
+           
             index={index}
             addable={false} 
             section="oponent"
+            iteration = {this.state.gameState.iteration}
           />
         </div>
       )
@@ -77,52 +72,37 @@ export class Game extends React.Component {
   }
 
   setOriginCard(newColumnIndex){
-    if (!this.props.active){return}
-    if( this.state.gameState.columnIndex === "nocard"){return}
-    
-    
-    this.setState(prevState => {
-      const prev = prevState.gameState
-      let newHands = prev.hands
-      newHands[prev.playerIndex][newColumnIndex] = [...newHands[prev.playerIndex][newColumnIndex], prev.top] 
-      return {
-        gameState: {
-          ...prev,
-          hands: newHands,
-          top: "nocard"
-        }
-      }
-    })
-    
-    this.props.makeMove({"handIndex": newColumnIndex})
+     this.props.makeMove({"handIndex": newColumnIndex})
   }
   
-  render() {return (
+  render() {
+    return (
+    
     <div style = {{minWidth:naturalWidth/2 * 5}}>
-      <DndProvider backend={HTML5Backend}>
-        <div  style={{
-          display: "flex", 
-          justifyContent: "center", 
-        }}>
-          {this.renderOponenet()}
-        </div>
-        <div  style={{
-          display: "flex", 
-          justifyContent: "center", 
-        }}>
-          {this.renderMy()}
-        </div>
-        <div  style={{
-          display: "flex", 
-          justifyContent: "center", 
-          height: "100%",
-          backgroundColor: "green"
-        }}>
-          
-          {<PlayingCard key={"origin"} value={this.state.gameState.top}/>}
-        </div>
+      <div  style={{
+        display: "flex", 
+        height: "100%",
+        justifyContent: "center", 
+      }}>
+        {this.renderOponenet()}
+      </div>
+      <div  style={{
+        display: "flex", 
+        height: "100%",
+        justifyContent: "center", 
+      }}>
+        {this.renderMy()}
+      </div>
+      <div  style={{
+        display: "flex", 
+        justifyContent: "center", 
+        height: "800px",
+        backgroundColor: "green",
+        overflow: "hidden"
+      }}>
+        {<PlayingCard style={{position: "absolute"}} key={"origin"} value={this.state.gameState.top}/>}
+      </div>
         
-      </DndProvider>
     </div>
   )}
 }

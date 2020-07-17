@@ -4,8 +4,7 @@ const TextEncoder = require('text-encoder-lite').TextEncoderLite;
 const TextDecoder = require('text-encoder-lite').TextDecoderLite;
 const WS = require('ws');
 
-const baseURL = "34.204.197.224:8081"
-// const ws = new WebSocket("ws://3.237.28.197:8081/chinese-poker/bs7e5g9o3vkf67aasg9g?clientId=1")
+const baseURL = "3.235.139.208:8081"
 
 async function messageToJson(message){
   return message.data.arrayBuffer()
@@ -22,7 +21,7 @@ export class ChinesePokerGame extends React.Component {
   constructor(props) {
     super(props)
     
-    this.url = `ws://${baseURL}${props.endpoint}?clientId=${"1"}`//window.prompt("insert id (integer)") 
+    this.url = `ws://${baseURL}${props.endpoint}?clientId=${window.prompt("insert id (integer)")}`//window.prompt("insert id (integer)") 
     this.state = {
       active: false
     }
@@ -44,7 +43,6 @@ export class ChinesePokerGame extends React.Component {
           } else if (data.actionType === "startGame"){
             this.setState({active: true})
           } else if (data.actionType === "clientConnectionStatus"){
-            console.log(data.action)
             this.setState({active: data.action.active})
           }
         })
