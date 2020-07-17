@@ -2,29 +2,30 @@ package communication
 
 import (
 	"github.com/danieligazit/chinese-poker/backend/games"
+	"github.com/danieligazit/chinese-poker/backend/utility"
 	"github.com/gorilla/websocket"
 )
 
 const channelBufSize = 100
 
-const PlayerIdURLKey = "clientId"
+const UsernameKey = "username"
 
 type Client struct {
-	Id     uint64
+	Id     uint32
 	ws     *websocket.Conn
 	ch     chan *[]byte
 	doneCh chan bool
-	server *Server
+	lobby  *Lobby
 }
 
-type Server struct {
+type Lobby struct {
 	id                  string
-	clients             map[uint64]*Client
-	clientId2Index      map[uint64]int
+	clients             map[uint32]*Client
 	upgrader            *websocket.Upgrader
 	game                games.IGame
 	started             bool
 	messageType2Handler map[string]clientMessageHandler
+	usernameRegistry    utility.UserNameRegistry
 }
 
 type ClientMessage struct {
@@ -33,7 +34,7 @@ type ClientMessage struct {
 }
 
 type ConnectionStatus struct {
-	ClientIds  []uint64 `json:"clientIds"`
+	Usernames  []string `json:"usernames"`
 	Active     bool     `json:"active"`
 	MinPlayers int      `json:"minPlayers"`
 	MaxPlayers int      `json:"maxPlayers"`

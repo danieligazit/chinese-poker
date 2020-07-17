@@ -28,7 +28,7 @@ func newLobby(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	serverId := xid.New().String()
-	communication.NewServer(serverId, game)
+	communication.NewLobby(serverId, game, utility.NewUserNameRegistryMap())
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(NewLobbyResponse{serverId, fmt.Sprintf("/%s/%s", gameStr, serverId)})

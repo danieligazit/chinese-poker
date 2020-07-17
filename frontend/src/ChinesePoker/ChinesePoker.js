@@ -8,16 +8,15 @@ export class Game extends React.Component {
     super(props)
     this.state = {
       gameState: {},
+      winners: [],
+      evaluations: [],
+      gameOver: false,
     }
   }  
   
   setGameState(newState){
-    console.log(newState)
     newState.hands.map((playerHands, playerIndex) => {
       playerHands.map((hand, handIndex) => {
-        // hand.map((card, cardIndex) => {
-        //   if (!card){hand[handIndex] = "b"}
-        // })
         while (hand.length < newState.iteration) {
           hand.push("nocard")
         }
@@ -26,27 +25,43 @@ export class Game extends React.Component {
     })
     
     this.setState({
+      ...this.state,
       gameState: newState,
     })
   }
   
+  setGameResult(gameResult){
+    this.setState({
+      ...this.state,
+      evaluations: gameResult.evaluations,
+      winners: gameResult.winners,
+      gameOver: true
+    })
+  }
   
   renderMy(){
     if (!this.state.gameState.hands){
       return
     }
-    const hands = this.state.gameState.hands[this.state.gameState.playerIndex]
+    const myIndex = this.state.gameState.playerIndex
+    const hands = this.state.gameState.hands[myIndex]
     return hands.map((hand, index) => {
-      return (  
+      return (
         <div style = {{width: "20%", maxWidth:naturalWidth}} key={"column-"+index} >
+          {this.state.gameOver &&
+            <div style = {{fontSize: 22, backgroundColor: 'black', textAlign: 'center', color: this.state.winners[index].includes(myIndex) ? 'green' : 'red'}}>
+              {this.state.evaluations[myIndex][index].rankStr}
+            </div>
+          }
           <Column 
             values={hand}
             index={index} 
             section="current"
-            addable={this.props.active && hand.filter(x => x).length === this.state.gameState.iteration -1 && this.state.gameState.top !== "nocard"}
+            addable={this.props.active && hand.filter(x => x !== "nocard").length === this.state.gameState.iteration -1 && this.state.gameState.top !== "nocard"}
             originCardSetter={this.setOriginCard.bind(this)}
             iteration = {this.state.gameState.iteration}
           />
+         
         </div>
       ) 
     })
@@ -55,17 +70,23 @@ export class Game extends React.Component {
   renderOponenet() {
     if (!this.state.gameState.hands) {return}
     
-    return this.state.gameState.hands[(this.state.gameState.playerIndex + 1) % 2].map((hand, index) => {
+    const oponentIndex = (this.state.gameState.playerIndex + 1) % 2
+    return this.state.gameState.hands[oponentIndex].map((hand, index) => {
       return (
         <div style = {{width: "20%", maxWidth:naturalWidth}}  key={"oponent-column-"+index} >
+          
           <Column 
             values={hand}
-           
             index={index}
             addable={false} 
             section="oponent"
             iteration = {this.state.gameState.iteration}
           />
+          {this.state.gameOver &&
+            <div style = {{fontSize: 22, backgroundColor: 'black', textAlign: 'center', color: this.state.winners[index].includes(oponentIndex) ? 'green' : 'red'}}>
+              {this.state.evaluations[oponentIndex][index].rankStr}
+            </div>
+          }
         </div>
       )
     })

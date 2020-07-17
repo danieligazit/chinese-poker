@@ -18,7 +18,7 @@ type Game struct {
 	iteration               int
 	cardsInCurrentIteration int
 	top                     *poker.Card
-	playerTurnIndex         int
+	playerTurnIndex         uint32
 	gameOver                bool
 }
 
@@ -36,7 +36,7 @@ type State struct {
 	Hands         [PlayerNumber][HandNumber][]*poker.Card `json:"hands"`
 	IsCurrentTurn bool                                    `json:"isCurrentTurn"`
 	Iteration     int                                     `json:"iteration"`
-	PlayerIndex   int                                     `json:"playerIndex"`
+	PlayerIndex   uint32                                  `json:"playerIndex"`
 }
 
 type Evaluation struct {
@@ -45,5 +45,6 @@ type Evaluation struct {
 }
 type Result struct {
 	Evaluations [PlayerNumber][HandNumber]Evaluation `json:"evaluations"`
-	Winners     [][]int                              `winners`
+	Winners     [][]int                              `json:"winners"`
+	State       State                                `json:"gameState"`
 }

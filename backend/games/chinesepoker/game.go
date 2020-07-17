@@ -7,6 +7,8 @@ import (
 	"github.com/danieligazit/chinese-poker/backend/utility"
 )
 
+const MaxInt32 = int32(^uint32(0) >> 1)
+
 func NewGame(params interface{}) games.IGame {
 	deck := poker.NewDeck()
 	card := deck.Draw(1)[0]
@@ -82,7 +84,7 @@ func (g *Game) updateTurn() (err error) {
 	return
 }
 
-func (g *Game) MakeMove(playerIndex int, moveI interface{}) (legal, gameOver bool, response interface{}, err error) {
+func (g *Game) MakeMove(playerIndex uint32, moveI interface{}) (legal, gameOver bool, response interface{}, err error) {
 	moveResponse := MoveResponse{}
 	if playerIndex != g.playerTurnIndex {
 		moveResponse.Message = fmt.Sprintf("It is not player %d turn to play. Should be %d", playerIndex, g.playerTurnIndex)
@@ -118,16 +120,17 @@ func (g *Game) MakeMove(playerIndex int, moveI interface{}) (legal, gameOver boo
 	return
 }
 
-func (g *Game) getResponseCards(requestingPlayerIndex int) (hands [PlayerNumber][HandNumber][]*poker.Card) {
+func (g *Game) getResponseCards(requestingPlayerIndex uint32, hideLastIteration bool) (hands [PlayerNumber][HandNumber][]*poker.Card) {
 
 	for playerIndex, playerHands := range g.hands {
 		for handIndex, handCards := range playerHands {
 			hands[playerIndex][handIndex] = make([]*poker.Card, len(handCards))
 			for cardIndex, _ := range handCards {
 
-				if cardIndex == LastIteration-1 && requestingPlayerIndex != playerIndex {
+				if hideLastIteration && cardIndex == LastIteration-1 && int(requestingPlayerIndex) != playerIndex {
 					continue
 				}
+
 				hands[playerIndex][handIndex][cardIndex] = &g.hands[playerIndex][handIndex][cardIndex]
 			}
 		}
@@ -139,14 +142,14 @@ func (g *Game) isLastIteration() bool {
 	return g.iteration == LastIteration
 }
 
-func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error) {
+func (g *Game) GetState(requestingPlayerIndex uint32) (state interface{}, err error) {
 	if requestingPlayerIndex >= PlayerNumber {
 		err = fmt.Errorf("Player index does not exists (must be 0-%d)", PlayerNumber-1)
 		return
 	}
 
 	curState := State{
-		Hands:         g.getResponseCards(requestingPlayerIndex),
+		Hands:         g.getResponseCards(requestingPlayerIndex, true),
 		IsCurrentTurn: false,
 		Iteration:     g.iteration,
 		PlayerIndex:   requestingPlayerIndex,
@@ -162,16 +165,20 @@ func (g *Game) GetState(requestingPlayerIndex int) (state interface{}, err error
 	return
 }
 
-func (g *Game) GetResult() (result interface{}, err error) {
+func (g *Game) GetResult(requestingPlayerIndex uint32) (result interface{}, err error) {
 	if !g.gameOver {
 		err = fmt.Errorf("Game is not over")
 		return
 	}
 
 	handEvaluations := [PlayerNumber][HandNumber]Evaluation{}
-	handWinners := make([][]int, HandNumber)
 
+	handWinners := make([][]int, HandNumber)
 	maxRanks := make([]int32, HandNumber)
+
+	for i := 0; i < HandNumber; i++ {
+		maxRanks[i] = MaxInt32
+	}
 
 	for playerIndex, playerHands := range g.hands {
 		for handIndex, hand := range playerHands {
@@ -182,9 +189,9 @@ func (g *Game) GetResult() (result interface{}, err error) {
 				RankStr: poker.RankString(rank),
 			}
 
-			if rank == maxRanks[playerIndex] {
+			if rank == maxRanks[handIndex] {
 				handWinners[handIndex] = append(handWinners[handIndex], playerIndex)
-			} else if rank > maxRanks[playerIndex] {
+			} else if rank < maxRanks[handIndex] {
 				handWinners[handIndex] = []int{playerIndex}
 				maxRanks[handIndex] = rank
 			}
@@ -194,6 +201,13 @@ func (g *Game) GetResult() (result interface{}, err error) {
 	result = Result{
 		Evaluations: handEvaluations,
 		Winners:     handWinners,
+		State: State{
+			Hands:         g.getResponseCards(requestingPlayerIndex, false),
+			IsCurrentTurn: false,
+			Iteration:     g.iteration,
+			PlayerIndex:   requestingPlayerIndex,
+			Top:           nil,
+		},
 	}
 	return
 

@@ -16,31 +16,27 @@ const stateResponse = "setState"
 const gameOverResponse = "gameOver"
 const errorResponse = "error"
 
-type clientMessageHandler func(clientIndex uint64, clientMessage ClientMessage) (err error)
+type clientMessageHandler func(clientIndex uint32, clientMessage ClientMessage) (err error)
 
-func (s *Server) userConnectHandler(clientId uint64, clientMessage ClientMessage) (err error) {
-	if _, exists := s.clientId2Index[clientId]; !exists {
-		s.clientId2Index[clientId] = len(s.clientId2Index)
-	}
-
+func (s *Lobby) userConnectHandler(clientId uint32, clientMessage ClientMessage) (err error) {
 	log.Infof("Added new client with id %d. There are currently %d clients connected", clientId, len(s.clients))
 	s.sendConnectionStatus()
 	s.sendGameState(clientId)
 
-	if minPlayers, _ := s.game.GetPlayerNum(); len(s.clientId2Index) >= minPlayers && !s.started {
+	if minPlayers, _ := s.game.GetPlayerNum(); len(s.clients) >= minPlayers && !s.started {
 		s.startGame()
 	}
 
 	return
 }
 
-func (s *Server) makeMoveHandler(clientId uint64, clientMessage ClientMessage) (err error) {
+func (s *Lobby) makeMoveHandler(clientId uint32, clientMessage ClientMessage) (err error) {
 	if !s.started {
 		s.sendErrorToClient(clientId, fmt.Errorf("Game hasn't started yet"))
 		return
 	}
 
-	legal, gameOver, response, err := s.game.MakeMove(s.clientId2Index[clientId], clientMessage.Action)
+	legal, gameOver, response, err := s.game.MakeMove(clientId, clientMessage.Action)
 	if err != nil {
 		s.sendErrorToClient(clientId, fmt.Errorf("Error getting game state: %w", err))
 		return
@@ -59,21 +55,19 @@ func (s *Server) makeMoveHandler(clientId uint64, clientMessage ClientMessage) (
 		return
 	}
 
-	result, err := s.game.GetResult()
-	if err != nil {
-		s.sendErrorToAllClients(fmt.Errorf("Error getting game results", err))
+	for clientId, _ := range s.clients {
+		result, err := s.game.GetResult(clientId)
+		if err != nil {
+			log.Errorf("Error getting result clientId %d: %w", clientId, err)
+		}
+		s.sendToClient(clientId, ClientMessage{gameOverResponse, result})
 	}
 
-	s.sendToAllClients(ClientMessage{gameOverResponse, result})
 	return
 }
 
-func (s *Server) sendGameState(clientId uint64) {
-	playerIndex, ok := s.clientId2Index[clientId]
-	if !ok {
-		return
-	}
-	state, err := s.game.GetState(playerIndex)
+func (s *Lobby) sendGameState(clientId uint32) {
+	state, err := s.game.GetState(clientId)
 	if err != nil {
 		s.sendErrorToClient(clientId, fmt.Errorf("Error getting game state: %w", err))
 		return
