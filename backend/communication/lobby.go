@@ -8,14 +8,12 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
 )
 
-func NewServer(id string, game games.IGame) *Server {
-	var server = Server{
+func NewLobby(id string, game games.IGame, usernameRegistry utility.UserNameRegistry) *Lobby {
+	var lobby = Lobby{
 		id:             id,
-		clients:        map[uint64]*Client{},
-		clientId2Index: map[uint64]int{},
+		clients:        make(map[uint32]*Client),
 		upgrader: &websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -23,38 +21,43 @@ func NewServer(id string, game games.IGame) *Server {
 				return true
 			},
 		},
+		usernameRegistry: usernameRegistry,
 		game:    game,
 		started: false,
 	}
-	server.messageType2Handler = map[string]clientMessageHandler{
-		makeMoveMessage: server.makeMoveHandler,
-		connectMessage:  server.userConnectHandler,
-		// 		chatMessage:     server.chatHandler,
+	lobby.messageType2Handler = map[string]clientMessageHandler{
+		makeMoveMessage: lobby.makeMoveHandler,
+		connectMessage:  lobby.userConnectHandler,
+		// 		chatMessage:     lobby.chatHandler,
 	}
 
-	uri := fmt.Sprintf("/%s/%s", server.game.GetGameName(), id)
-	http.HandleFunc(uri, server.handler)
-	log.Infof("New server at endpoint %s", uri)
-	return &server
+	uri := fmt.Sprintf("/%s/%s", lobby.game.GetGameName(), id)
+	http.HandleFunc(uri, lobby.handler)
+	log.Infof("New lobby at endpoint %s", uri)
+	return &lobby
 }
 
-func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
+func (s *Lobby) handler(w http.ResponseWriter, req *http.Request) {
 	utility.SetupResponseCORS(&w, req)
 
 	if _, maxClientNumber := s.game.GetPlayerNum(); len(s.clients) >= maxClientNumber {
-		http.Error(w, "Server is full", http.StatusLocked)
+		http.Error(w, "Lobby is full", http.StatusLocked)
 		return
 	}
 
-	clientIdStr := req.URL.Query().Get(PlayerIdURLKey)
-	clientId, err := strconv.ParseUint(clientIdStr, 10, 64)
-	if err != nil {
-		err = fmt.Errorf("Error parsing clientId: %w", err)
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	user := req.URL.Query().Get(UsernameKey)
+	if user == "null" {
+		log.Errorf("Got empty username")
+		http.Error(w, "Username cannot be empty", http.StatusBadRequest)
 		return
 	}
-
+	
+	clientId := s.usernameRegistry.AddUserName(user)
+	if _, maxPlayers := s.game.GetPlayerNum(); int(clientId) >= maxPlayers{
+		http.Error(w, "Lobby is full", http.StatusLocked)
+		return
+	} 
+	
 	conn, err := s.upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		err = fmt.Errorf("Failed to upgrade to websockets: %w", err)
@@ -62,29 +65,29 @@ func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	
 	client := NewClient(clientId, conn, s)
 	s.clients[clientId] = client
 
 	client.Listen()
 }
 
-func (s *Server) startGame() {
+func (s *Lobby) startGame() {
 	s.started = true
 	s.sendToAllClients(ClientMessage{ActionType: startGameResponse})
 }
 
-func (s *Server) sendErrorToClient(clientId uint64, err error) {
+func (s *Lobby) sendErrorToClient(clientId uint32, err error) {
 	log.Errorf(err.Error())
 	s.sendToClient(clientId, ClientMessage{errorResponse, err.Error()})
 }
 
-func (s *Server) sendErrorToAllClients(err error) {
+func (s *Lobby) sendErrorToAllClients(err error) {
 	log.Errorf(err.Error())
 	s.sendToAllClients(ClientMessage{errorResponse, err.Error()})
 }
 
-func (s *Server) HandleClientMessage(clientId uint64, message []byte) {
+func (s *Lobby) HandleClientMessage(clientId uint32, message []byte) {
 	var clientMessage ClientMessage
 	if err := json.Unmarshal(message, &clientMessage); err != nil {
 		s.sendErrorToClient(clientId, fmt.Errorf("Error unmarshaling client message: %w", err))
@@ -105,12 +108,12 @@ func (s *Server) HandleClientMessage(clientId uint64, message []byte) {
 
 }
 
-func (s *Server) HandleClientDissconnect(clientId uint64) {
+func (s *Lobby) HandleClientDissconnect(clientId uint32) {
 	delete(s.clients, clientId)
 	s.sendConnectionStatus()
 }
 
-func (s *Server) sendToClient(clientId uint64, message ClientMessage) {
+func (s *Lobby) sendToClient(clientId uint32, message ClientMessage) {
 	client, ok := s.clients[clientId]
 	if !ok {
 		log.Errorf("Client %d not found", clientId)
@@ -126,17 +129,18 @@ func (s *Server) sendToClient(clientId uint64, message ClientMessage) {
 	client.SendMessage(&bytes)
 }
 
-func (s *Server) sendToAllClients(message ClientMessage) {
+func (s *Lobby) sendToAllClients(message ClientMessage) {
 	for clientId, _ := range s.clients {
 		s.sendToClient(clientId, message)
 	}
 }
 
-func (s *Server) sendConnectionStatus() {
-	clientIds := []uint64{}
+func (s *Lobby) sendConnectionStatus() {
+	usernames := []string{}
 	for clientId, _ := range s.clients {
-		clientIds = append(clientIds, clientId)
+		username, _ := s.usernameRegistry.GetUserName(clientId)
+		usernames = append(usernames, username)
 	}
 	minPlayers, maxPlayers := s.game.GetPlayerNum()
-	s.sendToAllClients(ClientMessage{ActionType: clientConnectionStatusResponse, Action: ConnectionStatus{clientIds, s.started, minPlayers, maxPlayers}})
+	s.sendToAllClients(ClientMessage{ActionType: clientConnectionStatusResponse, Action: ConnectionStatus{usernames, s.started, minPlayers, maxPlayers}})
 }

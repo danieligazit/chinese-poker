@@ -4,7 +4,7 @@ const TextEncoder = require('text-encoder-lite').TextEncoderLite;
 const TextDecoder = require('text-encoder-lite').TextDecoderLite;
 const WS = require('ws');
 
-const baseURL = "3.235.139.208:8081"
+const baseURL = "localhost:8081"
 
 async function messageToJson(message){
   return message.data.arrayBuffer()
@@ -21,7 +21,7 @@ export class ChinesePokerGame extends React.Component {
   constructor(props) {
     super(props)
     
-    this.url = `ws://${baseURL}${props.endpoint}?clientId=${window.prompt("insert id (integer)")}`//window.prompt("insert id (integer)") 
+    this.url = `ws://${baseURL}${props.endpoint}?username=${window.prompt("insert username")}`
     this.state = {
       active: false
     }
@@ -44,6 +44,10 @@ export class ChinesePokerGame extends React.Component {
             this.setState({active: true})
           } else if (data.actionType === "clientConnectionStatus"){
             this.setState({active: data.action.active})
+          } else if (data.actionType === "gameOver") {
+            this.game.current.setGameState(data.action.gameState)
+            this.game.current.setGameResult(data.action)
+            this.setState({active: false})
           }
         })
     }

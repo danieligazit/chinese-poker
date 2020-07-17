@@ -23,15 +23,3 @@ export const PlayingCard = ({value, index=0, section, text}) => {
   
   
 }
-
-// export default DragSource(
-//   "PlayingCard",
-//   {
-//     beginDrag: () => ({}),
-//   },
-//   (connect, monitor) => ({
-//     connectDragSource: connect.dragSource(),
-//     connectDragPreview: connect.dragPreview(),
-//     isDragging: monitor.isDragging(),
-//   }),
-// )(PlayingCard)

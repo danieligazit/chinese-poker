@@ -21,9 +21,7 @@ export const Column = ({values, index, addable, originCardSetter, section, itera
     className = {section==="oponent"? 'vhand-compact-reversed': 'vhand-compact'}
     
     onClick = {() => {
-
       if (!addable) {return}
-      console.log('hi')
       originCardSetter(index)
     }}
     >
@@ -37,20 +35,3 @@ export const Column = ({values, index, addable, originCardSetter, section, itera
     </div>
   )
 } 
-
-
-export default DropTarget(
-  "PlayingCard",
-  {
-    canDrop: (props) => true,
-    drop: (props) => {
-    }
-  },
-  (connect, monitor) => {
-    return {
-      connectDropTarget: connect.dropTarget(),
-      isOver: !!monitor.isOver(),
-      canDrop: !!monitor.canDrop()
-    };
-  }
-)(Column)
