@@ -20,7 +20,7 @@
     "react-dropdown": "^1.7.0",
     "react-progress-button": "^5.1.0",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1",
+    "react-scripts": "5.0.1",
     "react-stonecutter": "^0.3.10",
     "text-encoder-lite": "^2.0.0"
   },
